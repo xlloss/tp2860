@@ -37,9 +37,9 @@
 
 static struct i2c_board_info tp2854_info =
 {
-    I2C_BOARD_INFO("TP2850", 0x44),
+    I2C_BOARD_INFO("TP2850", 0x45),
 };
-#define I2C_INDEX_0 0 //
+#define I2C_INDEX_0 3 //
 static struct i2c_client* tp28xx_client0;
 
 MODULE_DESCRIPTION("TechPoint TP2825B Linux Module");
@@ -50,7 +50,7 @@ MODULE_LICENSE("GPL");
 #define DEBUG            1  //printk debug information on/off
 
 
-#define DEFAULT_FORMAT      TP2802_1080P25
+#define DEFAULT_FORMAT      TP2802_720P30
 
 static int HDC_enable = 1;
 static int mode = DEFAULT_FORMAT;
@@ -65,10 +65,11 @@ static unsigned int id[MAX_CHIPS];
 #define TP2825B_I2C_B 	0x45
 
 
-unsigned char tp2802_i2c_addr[] = { TP2825B_I2C_A,
-                                    TP2825B_I2C_B
-                                  };
+//unsigned char tp2802_i2c_addr[] = { TP2825B_I2C_A,
+//                                    TP2825B_I2C_B
+//                                  };
 
+unsigned char tp2802_i2c_addr[] = { TP2825B_I2C_B};
 
 #define TP2802_I2C_ADDR(chip_id)    (tp2802_i2c_addr[chip_id])
 
@@ -172,7 +173,7 @@ unsigned char tp28xx_byte_read(unsigned char chip, unsigned char reg_addr)
 
     ret = i2c_transfer(client->adapter, msg, 2);
     if (ret != 2) {
-        printk("[%s %d] hi_i2c_transfer error, ret=%d.\n", __FUNCTION__, __LINE__, ret);
+        printk("[%s %d] addr 0x%x i2c_transfer error", __FUNCTION__, __LINE__, client->addr);
         return 0xff;
     }
 
@@ -187,7 +188,8 @@ static int i2c_client_init(void)
     struct i2c_adapter* i2c_adap;
 
     i2c_adap = i2c_get_adapter(I2C_INDEX_0);
-    tp28xx_client0 = i2c_new_device(i2c_adap, &tp2854_info);
+    //tp28xx_client0 = i2c_new_device(i2c_adap, &tp2854_info);
+    tp28xx_client0 = i2c_new_client_device(i2c_adap, &tp2854_info);
     i2c_put_adapter(i2c_adap);
 
     return 0;
@@ -1931,6 +1933,7 @@ static void tp2802_set_reg_page(unsigned char chip, unsigned char ch)
         break;
     default:
         tp28xx_byte_write(chip, 0x40, 0x00);
+        tp28xx_byte_write(chip, 0x41, 0x03);
         break;
     }
 }
@@ -2084,8 +2087,6 @@ static int __init tp2802_module_init(void)
            (TP2825_VERSION_CODE >>  8) & 0xff,
            TP2825_VERSION_CODE & 0xff);
 
-    printk("Compiled %s.%s.\n", __DATE__, __TIME__);
-
     if (chips <= 0 || chips > MAX_CHIPS)
     {
         printk("TP2825B module param 'chips' invalid value:%d\n", chips);
@@ -2110,8 +2111,9 @@ static int __init tp2802_module_init(void)
 
         val = tp28xx_byte_read(i, 0xfe);
         val <<= 8;
-        val += tp28xx_byte_read(i, 0xff);
+        val |= tp28xx_byte_read(i, 0xff);
 
+        pr_info("val 0x%x\n", val);
         if(TP2825B == val)
             printk("Detected TP2825B \n");
         else if(TP2850 == val)
@@ -2191,26 +2193,29 @@ static int TP2802_watchdog_deamon(void *data)
 
     tp2802wd_info* wdi;
 
-    struct timeval start, end;
+    //struct timeval start, end;
     int interval;
     unsigned char status, cvstd, gain, agc, tmp,flag_locked;
     unsigned char rx1,rx2;
 
     printk("TP2802_watchdog_deamon: start!\n");
 
-    sched_setscheduler(current, SCHED_FIFO, &param);
+    //sched_setscheduler(current, SCHED_FIFO, &param);
     current->flags |= PF_NOFREEZE;
 
     set_current_state(TASK_INTERRUPTIBLE);
 
     while (watchdog_state != WATCHDOG_EXIT)
     {
+        //printk("TP2802_watchdog_deamon: run\n");
         down(&watchdog_lock);
 
-        do_gettimeofday(&start);
+        //do_gettimeofday(&start);
 
         for(iChip = 0; iChip < chips; iChip++)
         {
+
+            //printk("TP2802_watchdog_deamon: run 2\n");
 
             wdi = &watchdog_info[iChip];
 
@@ -2221,10 +2226,11 @@ static int TP2802_watchdog_deamon(void *data)
                 tp2802_set_reg_page(iChip,i);
 
                 status = tp28xx_byte_read(iChip, 0x01);
-
+                //printk("status: 0x%x\n", status);
                 //state machine for video checking
                 if(status & FLAG_LOSS) //no video
                 {
+                    //pr_err("%s %d\n", __func__, __LINE__);
 
                     if(VIDEO_UNPLUG != wdi->state[i]) //switch to no video
                     {
@@ -2740,9 +2746,9 @@ static int TP2802_watchdog_deamon(void *data)
             }
         }
 
-        do_gettimeofday(&end);
+        //do_gettimeofday(&end);
 
-        interval = 1000000*(end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec);
+        //interval = 1000000*(end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec);
 
         //printk("WDT elapsed time %d.%dms\n", interval/1000, interval%1000);
         up(&watchdog_lock);

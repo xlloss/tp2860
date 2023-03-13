@@ -132,8 +132,8 @@ enum{
 #define FLAG_MEGA_MODE    0x20
 #define FLAG_HDA_MODE    0x10
 
-#define CHANNELS_PER_CHIP 	1
-#define MAX_CHIPS 	2
+#define CHANNELS_PER_CHIP 	4
+#define MAX_CHIPS 	1
 #define SUCCESS				0
 #define FAILURE				-1
 
