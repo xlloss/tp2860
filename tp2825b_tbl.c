@@ -1794,3 +1794,59 @@ static void TP2860_A1080P25_DataSet(unsigned char chip)
     tp28xx_byte_write(chip, 0x33, 0xa0);
     tp28xx_byte_write(chip, 0x35, 0x25);
 }
+
+void tp2860_ahd_720p30(unsigned char chip)
+{
+    tp28xx_byte_write(chip, 0x40, 0x00);
+    tp28xx_byte_write(chip, 0x42, 0x00);
+    tp28xx_byte_write(chip, 0x4e, 0x00);
+    tp28xx_byte_write(chip, 0x54, 0x00);
+    tp28xx_byte_write(chip, 0x38, 0x40);
+    tp28xx_byte_write(chip, 0x41, 0x00);
+    tp28xx_byte_write(chip, 0x02, 0x42);
+    tp28xx_byte_write(chip, 0x07, 0xc0);
+    tp28xx_byte_write(chip, 0x0b, 0xc0);
+    tp28xx_byte_write(chip, 0x0c, 0x13);
+    tp28xx_byte_write(chip, 0x0d, 0x70);
+    tp28xx_byte_write(chip, 0x15, 0x13);
+    tp28xx_byte_write(chip, 0x16, 0x16);
+    tp28xx_byte_write(chip, 0x17, 0x00);
+    tp28xx_byte_write(chip, 0x18, 0x19);
+    tp28xx_byte_write(chip, 0x19, 0xd0);
+    tp28xx_byte_write(chip, 0x1a, 0x25);
+    tp28xx_byte_write(chip, 0x1c, 0x86);
+    tp28xx_byte_write(chip, 0x1d, 0x70);
+    tp28xx_byte_write(chip, 0x20, 0x38);
+    tp28xx_byte_write(chip, 0x21, 0x46);
+    tp28xx_byte_write(chip, 0x22, 0x36);
+    tp28xx_byte_write(chip, 0x23, 0x3c);
+    tp28xx_byte_write(chip, 0x27, 0xad);
+    tp28xx_byte_write(chip, 0x2b, 0x60);
+    tp28xx_byte_write(chip, 0x2c, 0x3a);
+    tp28xx_byte_write(chip, 0x2d, 0x48);
+    tp28xx_byte_write(chip, 0x2e, 0x40);
+    tp28xx_byte_write(chip, 0x30, 0x4e);
+    tp28xx_byte_write(chip, 0x31, 0xe5);
+    tp28xx_byte_write(chip, 0x32, 0x00);
+    tp28xx_byte_write(chip, 0x33, 0xf0);
+    tp28xx_byte_write(chip, 0x35, 0x25);
+    tp28xx_byte_write(chip, 0x39, 0x18);
+    tp28xx_byte_write(chip, 0x40, 0x08);
+    tp28xx_byte_write(chip, 0x02, 0x79);
+    tp28xx_byte_write(chip, 0x03, 0x71);
+    tp28xx_byte_write(chip, 0x04, 0x71);
+    tp28xx_byte_write(chip, 0x13, 0xef);
+    tp28xx_byte_write(chip, 0x20, 0x00);
+    tp28xx_byte_write(chip, 0x21, 0x12);
+    tp28xx_byte_write(chip, 0x23, 0x9e);
+    tp28xx_byte_write(chip, 0x14, 0x47);
+    tp28xx_byte_write(chip, 0x15, 0x09);
+    tp28xx_byte_write(chip, 0x2a, 0x08);
+    tp28xx_byte_write(chip, 0x2b, 0x01);
+    tp28xx_byte_write(chip, 0x2c, 0x0e);
+    tp28xx_byte_write(chip, 0x2e, 0x02);
+    tp28xx_byte_write(chip, 0x10, 0xa0);
+    tp28xx_byte_write(chip, 0x10, 0x20);
+    tp28xx_byte_write(chip, 0x28, 0x02);
+    tp28xx_byte_write(chip, 0x28, 0x00);
+}

@@ -95,7 +95,7 @@ struct task_struct *task_watchdog_deamon = NULL;
 struct semaphore watchdog_lock;
 #define WATCHDOG_EXIT    0
 #define WATCHDOG_RUNNING 1
-#define WDT              1
+#define WDT              0
 
 int  TP2802_watchdog_init(void);
 void TP2802_watchdog_exit(void);
@@ -2126,7 +2126,7 @@ static int __init tp2802_module_init(void)
         id[i] = val;
 //        tp28xx_byte_write(chip, 0x26, 0x04);
         tp2802_comm_init(i);
-
+        tp2860_ahd_720p30(i);
     }
 
 #if (WDT)
