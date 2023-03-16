@@ -210,6 +210,743 @@ static void tp2802_write_table(unsigned char chip,
     }
 }
 
+void TP2860_mipi_out(unsigned char chip, unsigned char fmt,
+                    unsigned char std, unsigned char lane)
+{
+    char tmp;
+    //mipi setting
+    tp28xx_byte_write(chip, 0x40, 0x08); //select MIPI page
+    tp28xx_byte_write(chip, 0x02, 0x79);
+    tp28xx_byte_write(chip, 0x03, 0x71);
+    tp28xx_byte_write(chip, 0x04, 0x71);
+    tp28xx_byte_write(chip, 0x13, 0xef);
+    tp28xx_byte_write(chip, 0x20, 0x00);
+    tp28xx_byte_write(chip, 0x23, 0x9e);
+
+    if (MIPI_1LANE == lane) {
+        tp28xx_byte_write(chip, 0x21, 0x11);
+        if (FHD30 == fmt || FHD25 == fmt) {
+            if (STD_HDA == std) {
+                tp28xx_byte_write(chip, 0x14, 0x07);
+                tp28xx_byte_write(chip, 0x15, 0x05);
+            } else {
+                tp28xx_byte_write(chip, 0x14, 0x00);
+                    tp28xx_byte_write(chip, 0x15, 0x02);
+            }
+            tp28xx_byte_write(chip, 0x2a, 0x08);
+            tp28xx_byte_write(chip, 0x2b, 0x06);
+            tp28xx_byte_write(chip, 0x2c, 0x11);
+            tp28xx_byte_write(chip, 0x2e, 0x0a);
+        } else if (HD30 == fmt || HD25 == fmt) {
+            if(STD_HDA == std) {
+                tp28xx_byte_write(chip, 0x14, 0x47);
+                    tp28xx_byte_write(chip, 0x15, 0x09);
+            } else {
+                tp28xx_byte_write(chip, 0x14, 0x00);
+                tp28xx_byte_write(chip, 0x15, 0x12);
+            }
+            tp28xx_byte_write(chip, 0x2a, 0x04);
+            tp28xx_byte_write(chip, 0x2b, 0x03);
+            tp28xx_byte_write(chip, 0x2c, 0x09);
+            tp28xx_byte_write(chip, 0x2e, 0x02);
+        } else if (NTSC == fmt || PAL == fmt) {
+            tp28xx_byte_write(chip, 0x14, 0x51);
+            tp28xx_byte_write(chip, 0x15, 0x07);
+            tp28xx_byte_write(chip, 0x2a, 0x02);
+            tp28xx_byte_write(chip, 0x2b, 0x01);
+            tp28xx_byte_write(chip, 0x2c, 0x05);
+            tp28xx_byte_write(chip, 0x2e, 0x02);
+        } else if (HD60 == fmt || HD50 == fmt) {
+            tp28xx_byte_write(chip, 0x14, 0x00);
+            tp28xx_byte_write(chip, 0x15, 0x02);
+            tp28xx_byte_write(chip, 0x2a, 0x08);
+            tp28xx_byte_write(chip, 0x2b, 0x06);
+            tp28xx_byte_write(chip, 0x2c, 0x11);
+            tp28xx_byte_write(chip, 0x2e, 0x0a);
+        }
+    } else {
+        /* 2lane */
+        tp28xx_byte_write(chip, 0x21, 0x12);
+
+        if (FHD30 == fmt || FHD25 == fmt) {
+            if (STD_HDA == std) {
+                tp28xx_byte_write(chip, 0x14, 0x40);
+                tp28xx_byte_write(chip, 0x15, 0x05);
+            } else {
+                tp28xx_byte_write(chip, 0x14, 0x41);
+                tp28xx_byte_write(chip, 0x15, 0x02);
+            }
+            tp28xx_byte_write(chip, 0x2a, 0x04);
+            tp28xx_byte_write(chip, 0x2b, 0x03);
+            tp28xx_byte_write(chip, 0x2c, 0x09);
+            tp28xx_byte_write(chip, 0x2e, 0x02);
+        } else if (HD30 == fmt || HD25 == fmt) {
+            if(STD_HDA == std) {
+                tp28xx_byte_write(chip, 0x14, 0x50);
+                tp28xx_byte_write(chip, 0x15, 0x09);
+            } else {
+                tp28xx_byte_write(chip, 0x14, 0x41);
+                tp28xx_byte_write(chip, 0x15, 0x12);
+            }
+            tp28xx_byte_write(chip, 0x2a, 0x02);
+            tp28xx_byte_write(chip, 0x2b, 0x01);
+            tp28xx_byte_write(chip, 0x2c, 0x05);
+            tp28xx_byte_write(chip, 0x2e, 0x02);
+        } else if (NTSC == fmt || PAL == fmt) {
+            tp28xx_byte_write(chip, 0x14, 0x62);
+            tp28xx_byte_write(chip, 0x15, 0x07);
+            tp28xx_byte_write(chip, 0x2a, 0x02);
+            tp28xx_byte_write(chip, 0x2b, 0x00);
+            tp28xx_byte_write(chip, 0x2c, 0x03);
+            tp28xx_byte_write(chip, 0x2e, 0x02);
+        } else if (HD60 == fmt || HD50 == fmt) {
+            tp28xx_byte_write(chip, 0x14, 0x41);
+            tp28xx_byte_write(chip, 0x15, 0x02);
+            tp28xx_byte_write(chip, 0x2a, 0x04);
+            tp28xx_byte_write(chip, 0x2b, 0x03);
+            tp28xx_byte_write(chip, 0x2c, 0x09);
+            tp28xx_byte_write(chip, 0x2e, 0x02);
+        } else if (QHD30 == fmt || QHD25 == fmt ||
+                    FHD60 == fmt || FHD50 == fmt) {
+
+            tp28xx_byte_write(chip, 0x14, 0x00);
+            tp28xx_byte_write(chip, 0x15, 0x01);
+            tp28xx_byte_write(chip, 0x2a, 0x08);
+            tp28xx_byte_write(chip, 0x2b, 0x06);
+            tp28xx_byte_write(chip, 0x2c, 0x11);
+            tp28xx_byte_write(chip, 0x2e, 0x0a);
+        }
+    }
+
+    tmp = tp28xx_byte_read(chip, 0x14); //PLL reset
+    tp28xx_byte_write(chip, 0x14, 0x80 | tmp);
+    tp28xx_byte_write(chip, 0x14, tmp);
+
+    /* Enable MIPI CSI2 output */
+    tp28xx_byte_write(chip, 0x28, 0x02);  //stream off
+    tp28xx_byte_write(chip, 0x28, 0x00);  //stream on
+    tp28xx_byte_write(chip, 0x40, 0x00); //back to decoder page
+}
+
+/*
+ *  ch: video channel
+ *  fmt: PAL/NTSC/HD25/HD30
+ *  std: STD_TVI/STD_HDA
+ *  lane: MIPI_2LANE/MIPI_1LANE
+ *  sample: TP2860_sensor_init(VIN1,HD30,STD_TVI,MIPI_2LANE); //video is TVI 720p30 from Vin1
+*/
+void TP2860_sensor_init(unsigned char chip, unsigned char ch,
+                        unsigned char fmt, unsigned char std, unsigned char lane)
+{
+    unsigned char tmp;
+
+    tp28xx_byte_write(chip, 0x40, 0x00); //select decoder page
+    tp28xx_byte_write(chip, 0x06, 0x12); //default value
+    tp28xx_byte_write(chip, 0x42, 0x00); //common setting for all format
+    tp28xx_byte_write(chip, 0x4e, 0x00); //common setting for MIPI output
+    tp28xx_byte_write(chip, 0x54, 0x00); //common setting for MIPI output
+    tp28xx_byte_write(chip, 0x41, ch); //video MUX select
+
+    if (PAL == fmt) {
+#if CVBS_960H
+        tp28xx_byte_write(chip, 0x02, 0x47);
+        tp28xx_byte_write(chip, 0x0c, 0x13);
+        tp28xx_byte_write(chip, 0x0d, 0x51);
+
+        tp28xx_byte_write(chip, 0x15, 0x13);
+        tp28xx_byte_write(chip, 0x16, 0x76);
+        tp28xx_byte_write(chip, 0x17, 0x80);
+        tp28xx_byte_write(chip, 0x18, 0x17);
+        tp28xx_byte_write(chip, 0x19, 0x20);
+        tp28xx_byte_write(chip, 0x1a, 0x17);
+        tp28xx_byte_write(chip, 0x1c, 0x09);
+        tp28xx_byte_write(chip, 0x1d, 0x48);
+
+        tp28xx_byte_write(chip, 0x20, 0x48);
+        tp28xx_byte_write(chip, 0x21, 0x84);
+        tp28xx_byte_write(chip, 0x22, 0x37);
+        tp28xx_byte_write(chip, 0x23, 0x3f);
+
+        tp28xx_byte_write(chip, 0x2b, 0x70);
+        tp28xx_byte_write(chip, 0x2c, 0x2a);
+        tp28xx_byte_write(chip, 0x2d, 0x64);
+        tp28xx_byte_write(chip, 0x2e, 0x56);
+
+        tp28xx_byte_write(chip, 0x30, 0x7a);
+        tp28xx_byte_write(chip, 0x31, 0x4a);
+        tp28xx_byte_write(chip, 0x32, 0x4d);
+        tp28xx_byte_write(chip, 0x33, 0xf0);
+
+        tp28xx_byte_write(chip, 0x35, 0x65);
+        tp28xx_byte_write(chip, 0x38, 0x00);
+        tp28xx_byte_write(chip, 0x39, 0x04);
+
+#else //PAL 720H
+        tp28xx_byte_write(chip, 0x02, 0x47);
+        tp28xx_byte_write(chip, 0x06, 0x32);
+        tp28xx_byte_write(chip, 0x0c, 0x13);
+        tp28xx_byte_write(chip, 0x0d, 0x51);
+
+        tp28xx_byte_write(chip, 0x15, 0x03);
+        tp28xx_byte_write(chip, 0x16, 0xf0);
+        tp28xx_byte_write(chip, 0x17, 0xa0);
+        tp28xx_byte_write(chip, 0x18, 0x17);
+        tp28xx_byte_write(chip, 0x19, 0x20);
+        tp28xx_byte_write(chip, 0x1a, 0x15);
+        tp28xx_byte_write(chip, 0x1c, 0x06);
+        tp28xx_byte_write(chip, 0x1d, 0xc0);
+
+        tp28xx_byte_write(chip, 0x20, 0x48);
+        tp28xx_byte_write(chip, 0x21, 0x84);
+        tp28xx_byte_write(chip, 0x22, 0x37);
+        tp28xx_byte_write(chip, 0x23, 0x3f);
+
+        tp28xx_byte_write(chip, 0x2b, 0x70);
+        tp28xx_byte_write(chip, 0x2c, 0x2a);
+        tp28xx_byte_write(chip, 0x2d, 0x4b);
+        tp28xx_byte_write(chip, 0x2e, 0x56);
+
+        tp28xx_byte_write(chip, 0x30, 0x7a);
+        tp28xx_byte_write(chip, 0x31, 0x4a);
+        tp28xx_byte_write(chip, 0x32, 0x4d);
+        tp28xx_byte_write(chip, 0x33, 0xfb);
+
+        tp28xx_byte_write(chip, 0x35, 0x65);
+        tp28xx_byte_write(chip, 0x38, 0x00);
+        tp28xx_byte_write(chip, 0x39, 0x04);
+#endif
+	} else if(NTSC == fmt) {
+#if CVBS_960H
+        tp28xx_byte_write(chip, 0x02, 0x47);
+        tp28xx_byte_write(chip, 0x0c, 0x13);
+        tp28xx_byte_write(chip, 0x0d, 0x50);
+
+        tp28xx_byte_write(chip, 0x15, 0x13);
+        tp28xx_byte_write(chip, 0x16, 0x60);
+        tp28xx_byte_write(chip, 0x17, 0x80);
+        tp28xx_byte_write(chip, 0x18, 0x12);
+        tp28xx_byte_write(chip, 0x19, 0xf0);
+        tp28xx_byte_write(chip, 0x1a, 0x07);
+        tp28xx_byte_write(chip, 0x1c, 0x09);
+        tp28xx_byte_write(chip, 0x1d, 0x38);
+
+        tp28xx_byte_write(chip, 0x20, 0x40);
+        tp28xx_byte_write(chip, 0x21, 0x84);
+        tp28xx_byte_write(chip, 0x22, 0x36);
+        tp28xx_byte_write(chip, 0x23, 0x3c);
+
+        tp28xx_byte_write(chip, 0x2b, 0x70);
+        tp28xx_byte_write(chip, 0x2c, 0x2a);
+        tp28xx_byte_write(chip, 0x2d, 0x68);
+        tp28xx_byte_write(chip, 0x2e, 0x57);
+
+        tp28xx_byte_write(chip, 0x30, 0x62);
+        tp28xx_byte_write(chip, 0x31, 0xbb);
+        tp28xx_byte_write(chip, 0x32, 0x96);
+        tp28xx_byte_write(chip, 0x33, 0xc0);
+
+        tp28xx_byte_write(chip, 0x35, 0x65);
+        tp28xx_byte_write(chip, 0x38, 0x00);
+        tp28xx_byte_write(chip, 0x39, 0x04);
+
+#else	//NTSC 720H
+
+        tp28xx_byte_write(chip, 0x02, 0x47);
+        tp28xx_byte_write(chip, 0x0c, 0x13);
+        tp28xx_byte_write(chip, 0x0d, 0x50);
+
+        tp28xx_byte_write(chip, 0x15, 0x03);
+        tp28xx_byte_write(chip, 0x16, 0xd6);
+        tp28xx_byte_write(chip, 0x17, 0xa0);
+        tp28xx_byte_write(chip, 0x18, 0x12);
+        tp28xx_byte_write(chip, 0x19, 0xf0);
+        tp28xx_byte_write(chip, 0x1a, 0x05);
+        tp28xx_byte_write(chip, 0x1c, 0x06);
+        tp28xx_byte_write(chip, 0x1d, 0xb4);
+
+        tp28xx_byte_write(chip, 0x20, 0x40);
+        tp28xx_byte_write(chip, 0x21, 0x84);
+        tp28xx_byte_write(chip, 0x22, 0x36);
+        tp28xx_byte_write(chip, 0x23, 0x3c);
+
+        tp28xx_byte_write(chip, 0x2b, 0x70);
+        tp28xx_byte_write(chip, 0x2c, 0x2a);
+        tp28xx_byte_write(chip, 0x2d, 0x4b);
+        tp28xx_byte_write(chip, 0x2e, 0x57);
+
+        tp28xx_byte_write(chip, 0x30, 0x62);
+        tp28xx_byte_write(chip, 0x31, 0xbb);
+        tp28xx_byte_write(chip, 0x32, 0x96);
+        tp28xx_byte_write(chip, 0x33, 0xcb);
+
+        tp28xx_byte_write(chip, 0x35, 0x65);
+        tp28xx_byte_write(chip, 0x38, 0x00);
+        tp28xx_byte_write(chip, 0x39, 0x04);
+#endif
+    } else if(HD25 == fmt) {
+        tp28xx_byte_write(chip, 0x02, 0x42);
+        tp28xx_byte_write(chip, 0x07, 0xc0);
+        tp28xx_byte_write(chip, 0x0b, 0xc0);
+        tp28xx_byte_write(chip, 0x0c, 0x13);
+        tp28xx_byte_write(chip, 0x0d, 0x50);
+        tp28xx_byte_write(chip, 0x15, 0x13);
+        tp28xx_byte_write(chip, 0x16, 0x15);
+        tp28xx_byte_write(chip, 0x17, 0x00);
+        tp28xx_byte_write(chip, 0x18, 0x19);
+        tp28xx_byte_write(chip, 0x19, 0xd0);
+        tp28xx_byte_write(chip, 0x1a, 0x25);
+        tp28xx_byte_write(chip, 0x1c, 0x07);  //1280*720, 25fps
+        tp28xx_byte_write(chip, 0x1d, 0xbc);  //1280*720, 25fps
+        tp28xx_byte_write(chip, 0x20, 0x30);
+        tp28xx_byte_write(chip, 0x21, 0x84);
+        tp28xx_byte_write(chip, 0x22, 0x36);
+        tp28xx_byte_write(chip, 0x23, 0x3c);
+        tp28xx_byte_write(chip, 0x2b, 0x60);
+        tp28xx_byte_write(chip, 0x2c, 0x0a);
+        tp28xx_byte_write(chip, 0x2d, 0x30);
+        tp28xx_byte_write(chip, 0x2e, 0x70);
+        tp28xx_byte_write(chip, 0x30, 0x48);
+        tp28xx_byte_write(chip, 0x31, 0xbb);
+        tp28xx_byte_write(chip, 0x32, 0x2e);
+        tp28xx_byte_write(chip, 0x33, 0x90);
+        tp28xx_byte_write(chip, 0x35, 0x25);
+        tp28xx_byte_write(chip, 0x38, 0x00);
+        tp28xx_byte_write(chip, 0x39, 0x18);
+
+        //AHD720p25 extra
+        if (STD_HDA == std) {
+            tp28xx_byte_write(chip, 0x0d, 0x70);
+            tp28xx_byte_write(chip, 0x16, 0x16);
+            tp28xx_byte_write(chip, 0x1c, 0x87);
+            tp28xx_byte_write(chip, 0x1d, 0xba);
+            tp28xx_byte_write(chip, 0x20, 0x38);
+            tp28xx_byte_write(chip, 0x21, 0x46);
+            tp28xx_byte_write(chip, 0x27, 0xad);
+            tp28xx_byte_write(chip, 0x2c, 0x3a);
+            tp28xx_byte_write(chip, 0x2d, 0x48);
+            tp28xx_byte_write(chip, 0x2e, 0x40);
+            tp28xx_byte_write(chip, 0x30, 0x4f);
+            tp28xx_byte_write(chip, 0x31, 0x10);
+            tp28xx_byte_write(chip, 0x32, 0x08);
+            tp28xx_byte_write(chip, 0x33, 0x40);
+        }
+    } else if (HD30 == fmt) {
+        tp28xx_byte_write(chip, 0x02, 0x42);
+        tp28xx_byte_write(chip, 0x07, 0xc0);
+        tp28xx_byte_write(chip, 0x0b, 0xc0);
+        tp28xx_byte_write(chip, 0x0c, 0x13);
+        tp28xx_byte_write(chip, 0x0d, 0x50);
+        tp28xx_byte_write(chip, 0x15, 0x13);
+        tp28xx_byte_write(chip, 0x16, 0x15);
+        tp28xx_byte_write(chip, 0x17, 0x00);
+        tp28xx_byte_write(chip, 0x18, 0x19);
+        tp28xx_byte_write(chip, 0x19, 0xd0);
+        tp28xx_byte_write(chip, 0x1a, 0x25);
+        tp28xx_byte_write(chip, 0x1c, 0x06);  //1280*720, 30fps
+        tp28xx_byte_write(chip, 0x1d, 0x72);  //1280*720, 30fps
+        tp28xx_byte_write(chip, 0x20, 0x30);
+        tp28xx_byte_write(chip, 0x21, 0x84);
+        tp28xx_byte_write(chip, 0x22, 0x36);
+        tp28xx_byte_write(chip, 0x23, 0x3c);
+        tp28xx_byte_write(chip, 0x2b, 0x60);
+        tp28xx_byte_write(chip, 0x2c, 0x0a);
+        tp28xx_byte_write(chip, 0x2d, 0x30);
+        tp28xx_byte_write(chip, 0x2e, 0x70);
+        tp28xx_byte_write(chip, 0x30, 0x48);
+        tp28xx_byte_write(chip, 0x31, 0xbb);
+        tp28xx_byte_write(chip, 0x32, 0x2e);
+        tp28xx_byte_write(chip, 0x33, 0x90);
+        tp28xx_byte_write(chip, 0x35, 0x25);
+        tp28xx_byte_write(chip, 0x38, 0x00);
+        tp28xx_byte_write(chip, 0x39, 0x18);
+
+        //AHD720p30 extra
+        if (STD_HDA == std) {
+            tp28xx_byte_write(chip, 0x0d, 0x70);
+            tp28xx_byte_write(chip, 0x16, 0x16);
+            tp28xx_byte_write(chip, 0x1c, 0x86);
+            tp28xx_byte_write(chip, 0x1d, 0x70);
+            tp28xx_byte_write(chip, 0x20, 0x38);
+            tp28xx_byte_write(chip, 0x21, 0x46);
+            tp28xx_byte_write(chip, 0x27, 0xad);
+            tp28xx_byte_write(chip, 0x2c, 0x3a);
+            tp28xx_byte_write(chip, 0x2d, 0x48);
+            tp28xx_byte_write(chip, 0x2e, 0x40);
+            tp28xx_byte_write(chip, 0x30, 0x4e);
+            tp28xx_byte_write(chip, 0x31, 0xe5);
+            tp28xx_byte_write(chip, 0x32, 0x00);
+            tp28xx_byte_write(chip, 0x33, 0xf0);
+        }
+    } else if (FHD30 == fmt) {
+            tp28xx_byte_write(chip, 0x02, 0x40);
+            tp28xx_byte_write(chip, 0x07, 0xc0);
+            tp28xx_byte_write(chip, 0x0b, 0xc0);
+            tp28xx_byte_write(chip, 0x0c, 0x03);
+            tp28xx_byte_write(chip, 0x0d, 0x50);
+            tp28xx_byte_write(chip, 0x15, 0x03);
+            tp28xx_byte_write(chip, 0x16, 0xd2);
+            tp28xx_byte_write(chip, 0x17, 0x80);
+            tp28xx_byte_write(chip, 0x18, 0x29);
+            tp28xx_byte_write(chip, 0x19, 0x38);
+            tp28xx_byte_write(chip, 0x1a, 0x47);
+            tp28xx_byte_write(chip, 0x1c, 0x08);  //1920*1080, 30fps
+            tp28xx_byte_write(chip, 0x1d, 0x98);
+            tp28xx_byte_write(chip, 0x20, 0x30);
+            tp28xx_byte_write(chip, 0x21, 0x84);
+            tp28xx_byte_write(chip, 0x22, 0x36);
+            tp28xx_byte_write(chip, 0x23, 0x3c);
+            tp28xx_byte_write(chip, 0x2b, 0x60);
+            tp28xx_byte_write(chip, 0x2c, 0x0a);
+            tp28xx_byte_write(chip, 0x2d, 0x30);
+            tp28xx_byte_write(chip, 0x2e, 0x70);
+            tp28xx_byte_write(chip, 0x30, 0x48);
+            tp28xx_byte_write(chip, 0x31, 0xbb);
+            tp28xx_byte_write(chip, 0x32, 0x2e);
+            tp28xx_byte_write(chip, 0x33, 0x90);
+            tp28xx_byte_write(chip, 0x35, 0x05);
+            tp28xx_byte_write(chip, 0x38, 0x00);
+            tp28xx_byte_write(chip, 0x39, 0x1C);
+
+            //AHD1080p30 extra
+            if (STD_HDA == std) {
+                tp28xx_byte_write(chip, 0x0d, 0x70);
+                tp28xx_byte_write(chip, 0x15, 0x01);
+                tp28xx_byte_write(chip, 0x16, 0xf0);
+                tp28xx_byte_write(chip, 0x1c, 0x88);
+                tp28xx_byte_write(chip, 0x1d, 0x96);
+                tp28xx_byte_write(chip, 0x20, 0x38);
+                tp28xx_byte_write(chip, 0x21, 0x46);
+                tp28xx_byte_write(chip, 0x27, 0xad);
+                tp28xx_byte_write(chip, 0x2c, 0x3a);
+                tp28xx_byte_write(chip, 0x2d, 0x48);
+                tp28xx_byte_write(chip, 0x2e, 0x40);
+                tp28xx_byte_write(chip, 0x30, 0x52);
+                tp28xx_byte_write(chip, 0x31, 0xca);
+                tp28xx_byte_write(chip, 0x32, 0xf0);
+                tp28xx_byte_write(chip, 0x33, 0x20);
+                tp28xx_byte_write(chip, 0x35, 0x25);
+            }
+        } else if (FHD25 == fmt) {
+            tp28xx_byte_write(chip, 0x02, 0x40);
+            tp28xx_byte_write(chip, 0x07, 0xc0);
+            tp28xx_byte_write(chip, 0x0b, 0xc0);
+            tp28xx_byte_write(chip, 0x0c, 0x03);
+            tp28xx_byte_write(chip, 0x0d, 0x50);
+            tp28xx_byte_write(chip, 0x15, 0x03);
+            tp28xx_byte_write(chip, 0x16, 0xd2);
+            tp28xx_byte_write(chip, 0x17, 0x80);
+            tp28xx_byte_write(chip, 0x18, 0x29);
+            tp28xx_byte_write(chip, 0x19, 0x38);
+            tp28xx_byte_write(chip, 0x1a, 0x47);
+            tp28xx_byte_write(chip, 0x1c, 0x0a);  //1920*1080, 25fps
+            tp28xx_byte_write(chip, 0x1d, 0x50);
+            tp28xx_byte_write(chip, 0x20, 0x30);
+            tp28xx_byte_write(chip, 0x21, 0x84);
+            tp28xx_byte_write(chip, 0x22, 0x36);
+            tp28xx_byte_write(chip, 0x23, 0x3c);
+            tp28xx_byte_write(chip, 0x2b, 0x60);
+            tp28xx_byte_write(chip, 0x2c, 0x0a);
+            tp28xx_byte_write(chip, 0x2d, 0x30);
+            tp28xx_byte_write(chip, 0x2e, 0x70);
+            tp28xx_byte_write(chip, 0x30, 0x48);
+            tp28xx_byte_write(chip, 0x31, 0xbb);
+            tp28xx_byte_write(chip, 0x32, 0x2e);
+            tp28xx_byte_write(chip, 0x33, 0x90);
+            tp28xx_byte_write(chip, 0x35, 0x05);
+            tp28xx_byte_write(chip, 0x38, 0x00);
+            tp28xx_byte_write(chip, 0x39, 0x1C);
+
+            //AHD1080p25 extra
+            if (STD_HDA == std) {
+                tp28xx_byte_write(chip, 0x0d, 0x70);
+                tp28xx_byte_write(chip, 0x15, 0x01);
+                tp28xx_byte_write(chip, 0x16, 0xf0);
+                tp28xx_byte_write(chip, 0x1c, 0x8a);
+                tp28xx_byte_write(chip, 0x1d, 0x4e);
+                tp28xx_byte_write(chip, 0x20, 0x3c);
+                tp28xx_byte_write(chip, 0x21, 0x46);
+                tp28xx_byte_write(chip, 0x27, 0xad);
+                tp28xx_byte_write(chip, 0x2c, 0x3a);
+                tp28xx_byte_write(chip, 0x2d, 0x48);
+                tp28xx_byte_write(chip, 0x2e, 0x40);
+                tp28xx_byte_write(chip, 0x30, 0x52);
+                tp28xx_byte_write(chip, 0x31, 0xc3);
+                tp28xx_byte_write(chip, 0x32, 0x7d);
+                tp28xx_byte_write(chip, 0x33, 0xa0);
+                tp28xx_byte_write(chip, 0x35, 0x25);
+            }
+    } else if (HD50 == fmt) {
+        tp28xx_byte_write(chip, 0x02, 0x42);
+        tp28xx_byte_write(chip, 0x07, 0xc0);
+        tp28xx_byte_write(chip, 0x0b, 0xc0);
+        tp28xx_byte_write(chip, 0x0c, 0x03);
+        tp28xx_byte_write(chip, 0x0d, 0x50);
+        tp28xx_byte_write(chip, 0x15, 0x13);
+        tp28xx_byte_write(chip, 0x16, 0x15);
+        tp28xx_byte_write(chip, 0x17, 0x00);
+        tp28xx_byte_write(chip, 0x18, 0x19);
+        tp28xx_byte_write(chip, 0x19, 0xd0);
+        tp28xx_byte_write(chip, 0x1a, 0x25);
+        tp28xx_byte_write(chip, 0x1c, 0x07);  //1280*720, 25fps
+        tp28xx_byte_write(chip, 0x1d, 0xbc);  //1280*720, 25fps
+        tp28xx_byte_write(chip, 0x20, 0x30);
+        tp28xx_byte_write(chip, 0x21, 0x84);
+        tp28xx_byte_write(chip, 0x22, 0x36);
+        tp28xx_byte_write(chip, 0x23, 0x3c);
+        tp28xx_byte_write(chip, 0x2b, 0x60);
+        tp28xx_byte_write(chip, 0x2c, 0x1a);
+        tp28xx_byte_write(chip, 0x2d, 0x30);
+        tp28xx_byte_write(chip, 0x2e, 0x70);
+        tp28xx_byte_write(chip, 0x30, 0x48);
+        tp28xx_byte_write(chip, 0x31, 0xbb);
+        tp28xx_byte_write(chip, 0x32, 0x2e);
+        tp28xx_byte_write(chip, 0x33, 0x90);
+        tp28xx_byte_write(chip, 0x35, 0x05);
+        tp28xx_byte_write(chip, 0x38, 0x00);
+        tp28xx_byte_write(chip, 0x39, 0x1C);
+
+        //subcarrier 22M
+        if (STD_HDA == std) {
+            tp28xx_byte_write(chip, 0x18, 0x1b);
+            tp28xx_byte_write(chip, 0x20, 0x40);
+            tp28xx_byte_write(chip, 0x21, 0x46);
+            tp28xx_byte_write(chip, 0x25, 0xfe);
+            tp28xx_byte_write(chip, 0x26, 0x01);
+            tp28xx_byte_write(chip, 0x2c, 0x3a);
+            tp28xx_byte_write(chip, 0x2d, 0x48);
+            tp28xx_byte_write(chip, 0x2e, 0x40);
+            tp28xx_byte_write(chip, 0x30, 0x29);
+            tp28xx_byte_write(chip, 0x31, 0x67);
+            tp28xx_byte_write(chip, 0x32, 0xF3);
+            tp28xx_byte_write(chip, 0x33, 0x90);
+        }
+    } else if (HD60 == fmt) {
+        tp28xx_byte_write(chip, 0x02, 0x42);
+        tp28xx_byte_write(chip, 0x07, 0xc0);
+        tp28xx_byte_write(chip, 0x0b, 0xc0);
+        tp28xx_byte_write(chip, 0x0c, 0x03);
+        tp28xx_byte_write(chip, 0x0d, 0x50);
+        tp28xx_byte_write(chip, 0x15, 0x13);
+        tp28xx_byte_write(chip, 0x16, 0x15);
+        tp28xx_byte_write(chip, 0x17, 0x00);
+        tp28xx_byte_write(chip, 0x18, 0x19);
+        tp28xx_byte_write(chip, 0x19, 0xd0);
+        tp28xx_byte_write(chip, 0x1a, 0x25);
+        tp28xx_byte_write(chip, 0x1c, 0x06);  //1280*720, 60fps
+        tp28xx_byte_write(chip, 0x1d, 0x72);  //1280*720, 60fps
+        tp28xx_byte_write(chip, 0x20, 0x30);
+        tp28xx_byte_write(chip, 0x21, 0x84);
+        tp28xx_byte_write(chip, 0x22, 0x36);
+        tp28xx_byte_write(chip, 0x23, 0x3c);
+        tp28xx_byte_write(chip, 0x2b, 0x60);
+        tp28xx_byte_write(chip, 0x2c, 0x1a);
+        tp28xx_byte_write(chip, 0x2d, 0x30);
+        tp28xx_byte_write(chip, 0x2e, 0x70);
+        tp28xx_byte_write(chip, 0x30, 0x48);
+        tp28xx_byte_write(chip, 0x31, 0xbb);
+        tp28xx_byte_write(chip, 0x32, 0x2e);
+        tp28xx_byte_write(chip, 0x33, 0x90);
+        tp28xx_byte_write(chip, 0x35, 0x05);
+        tp28xx_byte_write(chip, 0x38, 0x00);
+        tp28xx_byte_write(chip, 0x39, 0x1C);
+
+        //subcarrier 22M
+        if (STD_HDA == std) {
+            tp28xx_byte_write(chip, 0x18, 0x1b);
+            tp28xx_byte_write(chip, 0x20, 0x40);
+            tp28xx_byte_write(chip, 0x21, 0x46);
+            tp28xx_byte_write(chip, 0x25, 0xfe);
+            tp28xx_byte_write(chip, 0x26, 0x01);
+            tp28xx_byte_write(chip, 0x2c, 0x3a);
+            tp28xx_byte_write(chip, 0x2d, 0x48);
+            tp28xx_byte_write(chip, 0x2e, 0x40);
+            tp28xx_byte_write(chip, 0x30, 0x29);
+            tp28xx_byte_write(chip, 0x31, 0x62);
+            tp28xx_byte_write(chip, 0x32, 0xFC);
+            tp28xx_byte_write(chip, 0x33, 0x96);
+        }
+    } else if (QHD30 == fmt) {
+        tp28xx_byte_write(chip, 0x02, 0x50);
+        tp28xx_byte_write(chip, 0x07, 0xc0);
+        tp28xx_byte_write(chip, 0x0b, 0xc0);
+        tp28xx_byte_write(chip, 0x0c, 0x03);
+        tp28xx_byte_write(chip, 0x0d, 0x50);
+        tp28xx_byte_write(chip, 0x15, 0x23);
+        tp28xx_byte_write(chip, 0x16, 0x1b);
+        tp28xx_byte_write(chip, 0x17, 0x00);
+        tp28xx_byte_write(chip, 0x18, 0x38);
+        tp28xx_byte_write(chip, 0x19, 0xa0);
+        tp28xx_byte_write(chip, 0x1a, 0x5a);
+        tp28xx_byte_write(chip, 0x1c, 0x0c);  //2560*1440, 30fps
+        tp28xx_byte_write(chip, 0x1d, 0xe2);
+        tp28xx_byte_write(chip, 0x20, 0x50);
+        tp28xx_byte_write(chip, 0x21, 0x84);
+        tp28xx_byte_write(chip, 0x22, 0x36);
+        tp28xx_byte_write(chip, 0x23, 0x3c);
+        tp28xx_byte_write(chip, 0x27, 0xad);
+        tp28xx_byte_write(chip, 0x2b, 0x60);
+        tp28xx_byte_write(chip, 0x2c, 0x2a);
+        tp28xx_byte_write(chip, 0x2d, 0x58);
+        tp28xx_byte_write(chip, 0x2e, 0x70);
+        tp28xx_byte_write(chip, 0x30, 0x74);
+        tp28xx_byte_write(chip, 0x31, 0x58);
+        tp28xx_byte_write(chip, 0x32, 0x9f);
+        tp28xx_byte_write(chip, 0x33, 0x60);
+        tp28xx_byte_write(chip, 0x35, 0x15);
+        tp28xx_byte_write(chip, 0x36, 0xdc);
+        tp28xx_byte_write(chip, 0x38, 0x40);
+        tp28xx_byte_write(chip, 0x39, 0x48);
+
+        if (STD_HDA == std) {
+            tmp = tp28xx_byte_read(chip, 0x14);
+            tmp |= 0x40;
+            tp28xx_byte_write(chip, 0x14, tmp);
+            tp28xx_byte_write(chip, 0x13, 0x00);
+            tp28xx_byte_write(chip, 0x15, 0x23);
+            tp28xx_byte_write(chip, 0x16, 0x16);
+            tp28xx_byte_write(chip, 0x18, 0x32);
+            tp28xx_byte_write(chip, 0x20, 0x80);
+            tp28xx_byte_write(chip, 0x21, 0x86);
+            tp28xx_byte_write(chip, 0x22, 0x36);
+            tp28xx_byte_write(chip, 0x2b, 0x60);
+            tp28xx_byte_write(chip, 0x2d, 0xa0);
+            tp28xx_byte_write(chip, 0x2e, 0x40);
+            tp28xx_byte_write(chip, 0x30, 0x48);
+            tp28xx_byte_write(chip, 0x31, 0x6a);
+            tp28xx_byte_write(chip, 0x32, 0xbe);
+            tp28xx_byte_write(chip, 0x33, 0x80);
+            tp28xx_byte_write(chip, 0x39, 0x40);
+        }
+    } else if (QHD25 == fmt) {
+        tp28xx_byte_write(chip, 0x02, 0x50);
+        tp28xx_byte_write(chip, 0x07, 0xc0);
+        tp28xx_byte_write(chip, 0x0b, 0xc0);
+        tp28xx_byte_write(chip, 0x0c, 0x03);
+        tp28xx_byte_write(chip, 0x0d, 0x50);
+        tp28xx_byte_write(chip, 0x15, 0x23);
+        tp28xx_byte_write(chip, 0x16, 0x1b);
+        tp28xx_byte_write(chip, 0x17, 0x00);
+        tp28xx_byte_write(chip, 0x18, 0x38);
+        tp28xx_byte_write(chip, 0x19, 0xa0);
+        tp28xx_byte_write(chip, 0x1a, 0x5a);
+        tp28xx_byte_write(chip, 0x1c, 0x0f);  //2560*1440, 25fps
+        tp28xx_byte_write(chip, 0x1d, 0x76);
+        tp28xx_byte_write(chip, 0x20, 0x50);
+        tp28xx_byte_write(chip, 0x21, 0x84);
+        tp28xx_byte_write(chip, 0x22, 0x36);
+        tp28xx_byte_write(chip, 0x23, 0x3c);
+        tp28xx_byte_write(chip, 0x27, 0xad);
+        tp28xx_byte_write(chip, 0x2b, 0x60);
+        tp28xx_byte_write(chip, 0x2c, 0x2a);
+        tp28xx_byte_write(chip, 0x2d, 0x58);
+        tp28xx_byte_write(chip, 0x2e, 0x70);
+        tp28xx_byte_write(chip, 0x30, 0x74);
+        tp28xx_byte_write(chip, 0x31, 0x58);
+        tp28xx_byte_write(chip, 0x32, 0x9f);
+        tp28xx_byte_write(chip, 0x33, 0x60);
+        tp28xx_byte_write(chip, 0x35, 0x15);
+        tp28xx_byte_write(chip, 0x36, 0xdc);
+        tp28xx_byte_write(chip, 0x38, 0x40);
+        tp28xx_byte_write(chip, 0x39, 0x48);
+
+        if (STD_HDA == std) {
+            tmp = tp28xx_byte_read(chip, 0x14);
+            tmp |= 0x40;
+            tp28xx_byte_write(chip, 0x14, tmp);
+            tp28xx_byte_write(chip, 0x13, 0x00);
+            tp28xx_byte_write(chip, 0x15, 0x23);
+            tp28xx_byte_write(chip, 0x16, 0x16);
+            tp28xx_byte_write(chip, 0x18, 0x32);
+            tp28xx_byte_write(chip, 0x20, 0x80);
+            tp28xx_byte_write(chip, 0x21, 0x86);
+            tp28xx_byte_write(chip, 0x22, 0x36);
+            tp28xx_byte_write(chip, 0x2b, 0x60);
+            tp28xx_byte_write(chip, 0x2d, 0xa0);
+            tp28xx_byte_write(chip, 0x2e, 0x40);
+            tp28xx_byte_write(chip, 0x30, 0x48);
+            tp28xx_byte_write(chip, 0x31, 0x6f);
+            tp28xx_byte_write(chip, 0x32, 0xb5);
+            tp28xx_byte_write(chip, 0x33, 0x80);
+            tp28xx_byte_write(chip, 0x39, 0x40);
+        }
+    } else if (FHD60 == fmt) {
+        tp28xx_byte_write(chip, 0x02, 0x50);
+        tp28xx_byte_write(chip, 0x07, 0xc0);
+        tp28xx_byte_write(chip, 0x0b, 0xc0);
+        tp28xx_byte_write(chip, 0x0c, 0x03);
+        tp28xx_byte_write(chip, 0x0d, 0x50);
+
+        tp28xx_byte_write(chip, 0x15, 0x03);
+        tp28xx_byte_write(chip, 0x16, 0xf0);
+        tp28xx_byte_write(chip, 0x17, 0x80);
+        tp28xx_byte_write(chip, 0x18, 0x12);
+        tp28xx_byte_write(chip, 0x19, 0x38);
+        tp28xx_byte_write(chip, 0x1a, 0x47);
+        tp28xx_byte_write(chip, 0x1c, 0x08);
+        tp28xx_byte_write(chip, 0x1d, 0x96);
+
+        tp28xx_byte_write(chip, 0x20, 0x38);
+        tp28xx_byte_write(chip, 0x21, 0x84);
+        tp28xx_byte_write(chip, 0x22, 0x36);
+        tp28xx_byte_write(chip, 0x23, 0x3c);
+
+        tp28xx_byte_write(chip, 0x27, 0xad);
+
+        tp28xx_byte_write(chip, 0x2b, 0x60);
+        tp28xx_byte_write(chip, 0x2c, 0x0a);
+        tp28xx_byte_write(chip, 0x2d, 0x40);
+        tp28xx_byte_write(chip, 0x2e, 0x70);
+
+        tp28xx_byte_write(chip, 0x30, 0x74);
+        tp28xx_byte_write(chip, 0x31, 0x9b);
+        tp28xx_byte_write(chip, 0x32, 0xa5);
+        tp28xx_byte_write(chip, 0x33, 0xe0);
+
+        tp28xx_byte_write(chip, 0x35, 0x05);
+        tp28xx_byte_write(chip, 0x38, 0x40);
+        tp28xx_byte_write(chip, 0x39, 0x68);
+    } else if (FHD50 == fmt) {
+        tp28xx_byte_write(chip, 0x02, 0x50);
+        tp28xx_byte_write(chip, 0x07, 0xc0);
+        tp28xx_byte_write(chip, 0x0b, 0xc0);
+        tp28xx_byte_write(chip, 0x0c, 0x03);
+        tp28xx_byte_write(chip, 0x0d, 0x50);
+
+        tp28xx_byte_write(chip, 0x15, 0x03);
+        tp28xx_byte_write(chip, 0x16, 0xe2);
+        tp28xx_byte_write(chip, 0x17, 0x80);
+        tp28xx_byte_write(chip, 0x18, 0x27);
+        tp28xx_byte_write(chip, 0x19, 0x38);
+        tp28xx_byte_write(chip, 0x1a, 0x47);
+
+        tp28xx_byte_write(chip, 0x1c, 0x0a);
+        tp28xx_byte_write(chip, 0x1d, 0x4e);
+
+        tp28xx_byte_write(chip, 0x20, 0x38);
+        tp28xx_byte_write(chip, 0x21, 0x84);
+        tp28xx_byte_write(chip, 0x22, 0x36);
+        tp28xx_byte_write(chip, 0x23, 0x3c);
+
+        tp28xx_byte_write(chip, 0x27, 0xad);
+
+        tp28xx_byte_write(chip, 0x2b, 0x60);
+        tp28xx_byte_write(chip, 0x2c, 0x0a);
+        tp28xx_byte_write(chip, 0x2d, 0x40);
+        tp28xx_byte_write(chip, 0x2e, 0x70);
+
+        tp28xx_byte_write(chip, 0x30, 0x74);
+        tp28xx_byte_write(chip, 0x31, 0x9b);
+        tp28xx_byte_write(chip, 0x32, 0xa5);
+        tp28xx_byte_write(chip, 0x33, 0xe0);
+
+        tp28xx_byte_write(chip, 0x35, 0x05);
+        tp28xx_byte_write(chip, 0x38, 0x40);
+        tp28xx_byte_write(chip, 0x39, 0x68);
+    }
+
+    TP2860_mipi_out(chip, fmt, std, lane);
+}
+
 unsigned char ReverseByte(unsigned char dat)
 {
 
@@ -2073,7 +2810,7 @@ module_param_array(output, uint, &chips, S_IRUGO);
 static int __init tp2802_module_init(void)
 {
     int ret = 0, i = 0, val = 0;
-//    unsigned char chip;
+    unsigned char chip;
     /*
     	// 1st check the module parameters
     	if ((mode < TP2802_1080P25) || (mode > TP2802_720P60))
@@ -2105,29 +2842,8 @@ static int __init tp2802_module_init(void)
 
     sema_init(&watchdog_lock, 1);
 
-    /* initize each tp2802*/
-    for (i = 0; i < chips; i ++)
-    {
-
-        val = tp28xx_byte_read(i, 0xfe);
-        val <<= 8;
-        val |= tp28xx_byte_read(i, 0xff);
-
-        pr_info("val 0x%x\n", val);
-        if(TP2825B == val)
-            printk("Detected TP2825B \n");
-        else if(TP2850 == val)
-            printk("Detected TP2850/TP9950\n");
-        else if(TP2860 == val)
-            printk("Detected TP2860\n");
-        else
-            printk("Invalid chip %2x\n", val);
-
-        id[i] = val;
-//        tp28xx_byte_write(chip, 0x26, 0x04);
-        tp2802_comm_init(i);
-        tp2860_ahd_720p30(i);
-    }
+    chip = 0;
+    TP2860_sensor_init(chip, SINGLE_VIN1, HD30, STD_HDA, MIPI_2LANES);
 
 #if (WDT)
     ret = TP2802_watchdog_init();

@@ -62,7 +62,9 @@ enum{
     EMB422_16BIT,   //only TP2825B YCbCr 4:2:2 16-bit with embedded sync
     SEP422_16BIT,   //only TP2825B YCbCr 4:2:2 16-bit with separate sync
     MIPI_2LANES,    //only TP2850
+    MIPI_1LANE,
 };
+
 enum{
     VIDEO_PAGE=0,   //
     MIPI_PAGE=8
@@ -123,6 +125,22 @@ enum{
     DIFF_VIN12 =6,
     DIFF_VIN34 =7
 };
+
+enum{
+    PAL,
+    NTSC,
+    HD25,
+    HD30,
+    FHD25,
+    FHD30,
+    HD50,
+    HD60,
+    QHD25,  //only support with 2lane mode
+    QHD30,	//only support with 2lane mode
+    FHD50,	//only support with 2lane mode
+    FHD60,	//only support with 2lane mode
+};
+
 #define FLAG_LOSS           0x80
 #define FLAG_H_LOCKED     0x20
 #define FLAG_HV_LOCKED    0x60
@@ -195,6 +213,9 @@ typedef struct _tp2802_PTZ_data
     unsigned char data[16];
 } tp2802_PTZ_data;
 
+#define CVBS_960H 1 //1->960H 0->720H
+extern void tp2860_write_reg(unsigned char reg, unsigned char dat);
+extern unsigned char tp2860_read_reg(unsigned char reg);
 
 // IOCTL Definitions
 #define TP2802_IOC_MAGIC            'v'
