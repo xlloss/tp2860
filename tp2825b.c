@@ -76,14 +76,14 @@ unsigned char tp2802_i2c_addr[] = { TP2825B_I2C_B};
 
 typedef struct
 {
-    unsigned int			count[CHANNELS_PER_CHIP];
-    unsigned int				  mode[CHANNELS_PER_CHIP];
-    unsigned int               scan[CHANNELS_PER_CHIP];
-    unsigned int				  gain[CHANNELS_PER_CHIP][4];
-    unsigned int               std[CHANNELS_PER_CHIP];
-    unsigned int                 state[CHANNELS_PER_CHIP];
-    unsigned int                 force[CHANNELS_PER_CHIP];
-    unsigned char addr;
+    unsigned int    count[CHANNELS_PER_CHIP];
+    unsigned int    mode[CHANNELS_PER_CHIP];
+    unsigned int    scan[CHANNELS_PER_CHIP];
+    unsigned int    gain[CHANNELS_PER_CHIP][4];
+    unsigned int    std[CHANNELS_PER_CHIP];
+    unsigned int    state[CHANNELS_PER_CHIP];
+    unsigned int    force[CHANNELS_PER_CHIP];
+    unsigned char   addr;
 } tp2802wd_info;
 
 
@@ -336,7 +336,8 @@ void TP2860_mipi_out(unsigned char chip, unsigned char fmt,
  *  sample: TP2860_sensor_init(VIN1,HD30,STD_TVI,MIPI_2LANE); //video is TVI 720p30 from Vin1
 */
 void TP2860_sensor_init(unsigned char chip, unsigned char ch,
-                        unsigned char fmt, unsigned char std, unsigned char lane)
+                        unsigned char fmt, unsigned char std,
+                        unsigned char lane)
 {
     unsigned char tmp;
 
@@ -2903,147 +2904,126 @@ unsigned char tp28xx_read_egain(unsigned char chip)
  ******************************************************************************/
 static int TP2802_watchdog_deamon(void *data)
 {
-    //unsigned long flags;
-    int iChip, i = 0;
-    struct sched_param param = { .sched_priority = 99 };
-
     tp2802wd_info* wdi;
-
-    //struct timeval start, end;
-    int interval;
+    struct sched_param param = {.sched_priority = 99};
+    int interval, iChip, i = 0;
     unsigned char status, cvstd, gain, agc, tmp,flag_locked;
     unsigned char rx1,rx2;
 
     printk("TP2802_watchdog_deamon: start!\n");
 
-    //sched_setscheduler(current, SCHED_FIFO, &param);
     current->flags |= PF_NOFREEZE;
-
     set_current_state(TASK_INTERRUPTIBLE);
 
-    while (watchdog_state != WATCHDOG_EXIT)
-    {
+    while (watchdog_state != WATCHDOG_EXIT) {
         //printk("TP2802_watchdog_deamon: run\n");
         down(&watchdog_lock);
 
-        //do_gettimeofday(&start);
-
-        for(iChip = 0; iChip < chips; iChip++)
-        {
-
+        for (iChip = 0; iChip < chips; iChip++) {
             //printk("TP2802_watchdog_deamon: run 2\n");
-
             wdi = &watchdog_info[iChip];
 
-            for(i=0; i<CHANNELS_PER_CHIP; i++)//scan four inputs:
-            {
-                if(SCAN_DISABLE == wdi->scan[i]) continue;
+            //scan four inputs:
+            for (i = 0; i < CHANNELS_PER_CHIP; i++) {
+                if (SCAN_DISABLE == wdi->scan[i])
+                    continue;
 
-                tp2802_set_reg_page(iChip,i);
-
+                tp2802_set_reg_page(iChip, i);
                 status = tp28xx_byte_read(iChip, 0x01);
                 //printk("status: 0x%x\n", status);
+
                 //state machine for video checking
-                if(status & FLAG_LOSS) //no video
-                {
+                if (status & FLAG_LOSS) {
                     //pr_err("%s %d\n", __func__, __LINE__);
 
-                    if(VIDEO_UNPLUG != wdi->state[i]) //switch to no video
-                    {
+                    //switch to no video
+                    if (VIDEO_UNPLUG != wdi->state[i]) {
                         wdi->state[i] = VIDEO_UNPLUG;
                         wdi->count[i] = 0;
-                        if(SCAN_MANUAL != wdi->scan[i]) wdi->mode[i] = INVALID_FORMAT;
-#if (DEBUG)
+                        if (SCAN_MANUAL != wdi->scan[i])
+                            wdi->mode[i] = INVALID_FORMAT;
+
+                        #if (DEBUG)
                         printk("video loss ch%02x chip%2x\r\n", i, iChip );
-#endif
+                        #endif
                     }
 
-                    if( 0 == wdi->count[i]) //first time into no video
-                    {
-                        if(SCAN_MANUAL != wdi->scan[i])
-                        {
+                    //first time into no video
+                    if (0 == wdi->count[i]) {
+                        if (SCAN_MANUAL != wdi->scan[i]) {
                             //tp2802_set_video_mode(iChip, DEFAULT_FORMAT, i, STD_TVI);
                             TP28xx_reset_default(iChip, i);
                         }
                         wdi->count[i]++;
-                    }
-                    else
-                    {
-                        if(wdi->count[i] < MAX_COUNT) wdi->count[i]++;
+                    } else {
+                        if(wdi->count[i] < MAX_COUNT)
+                            wdi->count[i]++;
+
                         continue;
                     }
-
-                }
-                else //there is video
-                {
-                    if( TP2802_PAL == wdi->mode[i] || TP2802_NTSC == wdi->mode[i] )
+                } else {
+                    //there is video
+                    if (TP2802_PAL == wdi->mode[i] || TP2802_NTSC == wdi->mode[i] )
                         flag_locked = FLAG_HV_LOCKED;
                     else
                         flag_locked = FLAG_HV_LOCKED;
 
-                    if( flag_locked == (status & flag_locked) ) //video locked
-                    {
-                        if(VIDEO_LOCKED == wdi->state[i])
-                        {
-                            if(wdi->count[i] < MAX_COUNT) wdi->count[i]++;
-                        }
-                        else if(VIDEO_UNPLUG == wdi->state[i])
-                        {
+                    //video locked
+                    if (flag_locked == (status & flag_locked)) {
+                        if (VIDEO_LOCKED == wdi->state[i]) {
+                            if(wdi->count[i] < MAX_COUNT)
+                                wdi->count[i]++;
+                        } else if (VIDEO_UNPLUG == wdi->state[i]) {
                             wdi->state[i] = VIDEO_IN;
                             wdi->count[i] = 0;
-#if (DEBUG)
+
+                            #if (DEBUG)
                             printk("1video in ch%02x chip%2x\r\n", i, iChip);
-#endif
-                        }
-                        else if(wdi->mode[i] != INVALID_FORMAT)
-                        {
+                            #endif
+                        } else if (wdi->mode[i] != INVALID_FORMAT) {
                             //if( FLAG_HV_LOCKED == (FLAG_HV_LOCKED & status) )//H&V locked
                             {
                                 wdi->state[i] = VIDEO_LOCKED;
                                 wdi->count[i] = 0;
-#if (DEBUG)
+                                #if (DEBUG)
                                 printk("video locked %02x ch%02x chip%2x\r\n", status, i, iChip);
-#endif
+                                #endif
                             }
-
                         }
-                    }
-                    else  //video in but unlocked
-                    {
-                        if(VIDEO_UNPLUG == wdi->state[i])
-                        {
+                    } else {
+                        //video in but unlocked
+                        if(VIDEO_UNPLUG == wdi->state[i]) {
                             wdi->state[i] = VIDEO_IN;
                             wdi->count[i] = 0;
-#if (DEBUG)
+                            #if (DEBUG)
                             printk("2video in ch%02x chip%2x\r\n", i, iChip);
-#endif
-                        }
-                        else if(VIDEO_LOCKED == wdi->state[i])
-                        {
+                            #endif
+                        } else if (VIDEO_LOCKED == wdi->state[i]) {
                             wdi->state[i] = VIDEO_UNLOCK;
                             wdi->count[i] = 0;
-#if (DEBUG)
+                            #if (DEBUG)
                             printk("video unstable ch%02x chip%2x\r\n", i, iChip);
-#endif
-                        }
-                        else
-                        {
-                            if(wdi->count[i] < MAX_COUNT) wdi->count[i]++;
-                            if(VIDEO_UNLOCK == wdi->state[i] && wdi->count[i] > 2)
-                            {
+                            #endif
+                        } else {
+                            if (wdi->count[i] < MAX_COUNT)
+                                wdi->count[i]++;
+
+                            if (VIDEO_UNLOCK == wdi->state[i] && wdi->count[i] > 2) {
                                 wdi->state[i] = VIDEO_IN;
                                 wdi->count[i] = 0;
-                                if(SCAN_MANUAL != wdi->scan[i]) TP28xx_reset_default(iChip, i);
-#if (DEBUG)
+
+                                if (SCAN_MANUAL != wdi->scan[i])
+                                    TP28xx_reset_default(iChip, i);
+
+                                #if (DEBUG)
                                 printk("video unlocked ch%02x chip%2x\r\n",i, iChip);
-#endif
+                                #endif
                             }
                         }
                     }
 
-                    if( wdi->force[i] ) //manual reset for V1/2 switching
-                    {
-
+                    //manual reset for V1/2 switching
+                    if (wdi->force[i]) {
                         wdi->state[i] = VIDEO_UNPLUG;
                         wdi->count[i] = 0;
                         wdi->mode[i] = INVALID_FORMAT;
@@ -3051,292 +3031,230 @@ static int TP2802_watchdog_deamon(void *data)
                         TP28xx_reset_default(iChip, i);
                         //tp2802_set_video_mode(iChip, DEFAULT_FORMAT, i);
                     }
-
                 }
 
-                //printk("video state %2x detected ch%02x count %4x\r\n", wdi->state[i], i, wdi->count[i] );
-                if( VIDEO_IN == wdi->state[i] )
-                {
-                    if(SCAN_MANUAL != wdi->scan[i])
-                    {
-
+                //printk("video state %2x detected ch%02x count %4x\r\n",
+                //          wdi->state[i], i, wdi->count[i] );
+                if (VIDEO_IN == wdi->state[i]) {
+                    if (SCAN_MANUAL != wdi->scan[i]) {
                         //tp28xx_byte_write(iChip, 0x40, 0x08);
                         //tp28xx_byte_write(iChip, 0x13, 0x24);
                         //tp28xx_byte_write(iChip, 0x40, 0x00);
                         //tp28xx_byte_write(iChip, 0x35, 0x25);
                         cvstd = tp28xx_byte_read(iChip, 0x03);
-#if (DEBUG)
+                        #if (DEBUG)
                         printk("video format %2x detected ch%02x chip%2x count%2x\r\n", cvstd, i, iChip, wdi->count[i]);
-#endif
+                        #endif
+
                         cvstd &= 0x0f;
+                        wdi-> std[i] = STD_TVI;
+                        if (SCAN_HDA == wdi->scan[i])
+                            wdi-> std[i] = STD_HDA;
+                        else if(SCAN_HDC == wdi->scan[i])
+                            wdi-> std[i] = STD_HDC;
 
-                            wdi-> std[i] = STD_TVI;
-                            if(SCAN_HDA == wdi->scan[i])          wdi-> std[i] = STD_HDA;
-                            else if(SCAN_HDC == wdi->scan[i])     wdi-> std[i] = STD_HDC;
-/*
-                            if( TP2802_SD == (cvstd&0x07) )
-                            {
-                                    if(wdi->count[i] & 0x01)
-                                    {
-                                        wdi-> mode[i] = TP2802_PAL;
-                                    }
+                        /*
+                        if( TP2802_SD == (cvstd&0x07) )
+                        {
+                                if(wdi->count[i] & 0x01)
+                                {
+                                    wdi-> mode[i] = TP2802_PAL;
+                                }
+                                else
+                                {
+                                    wdi-> mode[i] = TP2802_NTSC;
+                                }
+                                tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+
+                        }
+                        else if((cvstd&0x07) < 6 )
+                        */
+
+                        if ((cvstd & 0x07) < 6) {
+                                if (TP2802_720P25 == (cvstd & 0x07)) {
+                                    wdi-> mode[i] = TP2802_720P25V2;
+                                } else if (TP2802_720P30 == (cvstd & 0x07)) {
+                                    if (wdi->count[i] & 1)
+                                        wdi-> mode[i] = TP2802_QHD15;
                                     else
-                                    {
-                                        wdi-> mode[i] = TP2802_NTSC;
-                                    }
+                                        wdi-> mode[i] = TP2802_720P30V2;
+                                } else if (TP2802_720P60 == (cvstd & 0x07)) {
+                                    if (wdi->count[i] & 1)
+                                        wdi-> mode[i] = TP2802_QHD30;
+                                    else
+                                        wdi-> mode[i] = TP2802_720P60;
+                                } else if (TP2802_720P50 == (cvstd & 0x07)) {
+                                    if (wdi->count[i] & 1)
+                                        wdi-> mode[i] = TP2802_QHD25;
+                                    else
+                                        wdi-> mode[i] = TP2802_720P50;
+                                } else if (TP2802_1080P30 == (cvstd & 0x07)) {
+                                    if (wdi->count[i] & 1)
+                                        wdi-> mode[i] = TP2802_8M15;
+                                    else
+                                        wdi-> mode[i] = TP2802_1080P30;
+                                } else if (TP2802_1080P25 == (cvstd & 0x07)) {
+                                    if (wdi->count[i] & 1)
+                                        wdi-> mode[i] = TP2802_8M12;
+                                    else
+                                        wdi-> mode[i] = TP2802_1080P25;
+                                }
+
+                                tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+                        }
+                        else {
+                            //format is 7
+                            tp28xx_byte_write(iChip, 0x2f, 0x09);
+                            tmp = tp28xx_byte_read(iChip, 0x04);
+
+                            #if (DEBUG)
+                            printk("detection %02x  ch%02x chip%2x\r\n", tmp, i,iChip);
+                            #endif
+
+                            if (0x4e == tmp) {
+                                if (SCAN_HDA == wdi->scan[i])
+                                    wdi-> mode[i] = TP2802_QXGA18;
+                                else if (SCAN_AUTO == wdi->scan[i] && wdi->count[i] < 3)
+                                    wdi-> mode[i] = TP2802_QXGA18;
+                                else
+                                    wdi-> mode[i] = TP2802_3M18;
+
+                                tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+                            } else if (0x5d == tmp) {
+                                if ((wdi->count[i] % 3) == 0) {
+                                    wdi-> mode[i] = TP2802_5M12;
+                                    wdi-> std[i] = STD_HDA;
+                                    tp2802_set_video_mode(iChip, wdi-> mode[i], i,  wdi-> std[i]);
+                                } else if((wdi->count[i] % 3) == 1) {
+                                    wdi-> mode[i] = TP2802_4M15;
                                     tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-
-                            }
-                            else if((cvstd&0x07) < 6 )
-*/
-                            if((cvstd&0x07) < 6 )
-                            {
-
-                                    if( TP2802_720P25 == (cvstd&0x07) )
-                                    {
-                                        wdi-> mode[i] = TP2802_720P25V2;
-                                    }
-                                    else if( TP2802_720P30 == (cvstd&0x07) )
-                                    {
-                                        if(wdi->count[i] & 1)
-                                            wdi-> mode[i] = TP2802_QHD15;
-                                        else
-                                            wdi-> mode[i] = TP2802_720P30V2;
-                                    }
-                                    else if( TP2802_720P60 == (cvstd&0x07) )
-                                    {
-                                        if(wdi->count[i] & 1)
-                                            wdi-> mode[i] = TP2802_QHD30;
-                                        else
-                                            wdi-> mode[i] = TP2802_720P60;
-                                    }
-                                    else if( TP2802_720P50 == (cvstd&0x07) )
-                                    {
-                                        if(wdi->count[i] & 1)
-                                            wdi-> mode[i] = TP2802_QHD25;
-                                        else
-                                            wdi-> mode[i] = TP2802_720P50;
-                                    }
-                                    else if( TP2802_1080P30 == (cvstd&0x07) )
-                                    {
-                                        if(wdi->count[i] & 1)
-                                            wdi-> mode[i] = TP2802_8M15;
-                                        else
-                                            wdi-> mode[i] = TP2802_1080P30;
-                                    }
-                                    else if( TP2802_1080P25 == (cvstd&0x07) )
-                                    {
-                                        if(wdi->count[i] & 1)
-                                            wdi-> mode[i] = TP2802_8M12;
-                                        else
-                                            wdi-> mode[i] = TP2802_1080P25;
-                                    }
+                                } else {
+                                    wdi-> mode[i] = TP2802_720P30HDR;
                                     tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-
-                            }
-                            else //format is 7
-                            {
-
-                                    tp28xx_byte_write(iChip, 0x2f, 0x09);
-                                    tmp = tp28xx_byte_read(iChip, 0x04);
-#if (DEBUG)
-                                    printk("detection %02x  ch%02x chip%2x\r\n", tmp, i,iChip);
-#endif
-                                    if(0x4e == tmp)
-                                    {
-
-                                        if(SCAN_HDA == wdi->scan[i])
-                                            wdi-> mode[i] = TP2802_QXGA18;
-                                        else if(SCAN_AUTO == wdi->scan[i] && wdi->count[i] < 3)
-                                            wdi-> mode[i] = TP2802_QXGA18;
-                                        else
-                                            wdi-> mode[i] = TP2802_3M18;
-
-                                        tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                    }
-                                    else if(0x5d == tmp)
-                                    {
-                                        if((wdi->count[i] % 3) ==0)
-                                        {
-                                            wdi-> mode[i] = TP2802_5M12;
-                                            wdi-> std[i] = STD_HDA;
-                                            tp2802_set_video_mode(iChip, wdi-> mode[i], i,  wdi-> std[i]);
-                                        }
-                                        else if((wdi->count[i] % 3) ==1)
-                                        {
-                                            wdi-> mode[i] = TP2802_4M15;
-                                            tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                        }
-                                        else
-                                        {
-                                            wdi-> mode[i] = TP2802_720P30HDR;
-                                            tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                        }
-                                    }
-                                    else if(0x5c == tmp)
-                                    {
-                                        wdi-> mode[i] = TP2802_5M12;
-                                        tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                    }
-                                    else if(0x75 == tmp)
-                                    {
-                                        wdi-> mode[i] = TP2802_6M10;
-                                        tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                    }
-                                    else if(0x38 == tmp)
-                                    {
-                                        wdi-> mode[i] = TP2802_QXGA25; //current only HDA
-                                        wdi-> std[i] = STD_HDA;
-                                        tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                    }
-                                    else if(0x2e == tmp)
-                                    {
-                                        wdi-> mode[i] = TP2802_QXGA30; //current only HDA
-                                        wdi-> std[i] = STD_HDA;
-                                        tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                    }
-                                    else if(0x3a == tmp)
-                                    {
-                                        if(TP2802_5M20 != wdi-> mode[i])
-                                        {
-                                            wdi-> mode[i] = TP2802_5M20;
-                                            tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                            //soft reset
-                                            agc = tp28xx_byte_read(iChip, 0x06);
-                                            agc |=0x80;
-                                            tp28xx_byte_write(iChip, 0x06, agc);
-
-                                        }
-                                    }
-                                    else if(0x39 == tmp)
-                                    {
-                                        if(TP2802_6M20 != wdi-> mode[i])
-                                        {
-                                            wdi-> mode[i] = TP2802_6M20;
-                                            wdi-> std[i] = STD_HDC;
-                                            tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                        }
-                                    }
-                                    else if(0x89 == tmp)
-                                    {
-                                        wdi-> mode[i] = TP2802_1080P15;
-                                        tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                    }
-                                    if(0x22 == tmp)
-                                    {
-                                        wdi-> mode[i] = TP2802_1080P60;
-                                        tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                    }
-                                    else if(0x29 == tmp)
-                                    {
-                                        wdi-> mode[i] = TP2802_1080P50;
-                                        tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                    }
-                                    else if(0x93 == tmp)
-                                    {
-                                        wdi-> mode[i] = TP2802_NTSC;
-                                        tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                    }
-                                    else if(0x94 == tmp)
-                                    {
-                                        wdi-> mode[i] = TP2802_PAL;
-                                        tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                    }
+                                }
+                            } else if (0x5c == tmp) {
+                                wdi-> mode[i] = TP2802_5M12;
+                                tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+                            } else if (0x75 == tmp) {
+                                wdi-> mode[i] = TP2802_6M10;
+                                tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+                            } else if (0x38 == tmp) {
+                                //current only HDA
+                                wdi-> mode[i] = TP2802_QXGA25;
+                                wdi-> std[i] = STD_HDA;
+                                tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+                            } else if (0x2e == tmp) {
+                                //current only HDA
+                                wdi-> mode[i] = TP2802_QXGA30;
+                                wdi-> std[i] = STD_HDA;
+                                tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+                            } else if (0x3a == tmp) {
+                                if (TP2802_5M20 != wdi-> mode[i]) {
+                                    wdi-> mode[i] = TP2802_5M20;
+                                    tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+                                    //soft reset
+                                    agc = tp28xx_byte_read(iChip, 0x06);
+                                    agc |=0x80;
+                                    tp28xx_byte_write(iChip, 0x06, agc);
+                                }
+                            } else if (0x39 == tmp) {
+                                if (TP2802_6M20 != wdi-> mode[i]) {
+                                    wdi-> mode[i] = TP2802_6M20;
+                                    wdi-> std[i] = STD_HDC;
+                                    tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+                                }
+                            } else if (0x89 == tmp) {
+                                wdi-> mode[i] = TP2802_1080P15;
+                                tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
                             }
 
+                            if (0x22 == tmp) {
+                                wdi-> mode[i] = TP2802_1080P60;
+                                tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+                            } else if (0x29 == tmp) {
+                                wdi-> mode[i] = TP2802_1080P50;
+                                tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+                            } else if (0x93 == tmp) {
+                                wdi-> mode[i] = TP2802_NTSC;
+                                tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+                            } else if (0x94 == tmp) {
+                                wdi-> mode[i] = TP2802_PAL;
+                                tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+                            }
+                        }
                     }
-
                 }
 
-#define EQ_COUNT 10
-                if( VIDEO_LOCKED == wdi->state[i]) //check signal lock
-                {
-                    if(0 == wdi->count[i] )
-                    {
-
+                #define EQ_COUNT 10
+                if (VIDEO_LOCKED == wdi->state[i]) {
+                    //check signal lock
+                    if (0 == wdi->count[i]) {
                         tmp = tp28xx_byte_read(iChip, 0x26);
                         tmp |= 0x01;
                         tp28xx_byte_write(iChip, 0x26, tmp);
 
-                        if( (SCAN_AUTO == wdi->scan[i] || SCAN_TVI == wdi->scan[i] ))
-                        {
-
-                            if( (TP2802_720P30V2==wdi-> mode[i]) || (TP2802_720P25V2==wdi-> mode[i]) )
-                            {
+                        if ((SCAN_AUTO == wdi->scan[i] || SCAN_TVI == wdi->scan[i])) {
+                            if ((TP2802_720P30V2 == wdi-> mode[i]) || (TP2802_720P25V2 == wdi-> mode[i])) {
                                 tmp = tp28xx_byte_read(iChip, 0x03);
-#if (DEBUG)
-                                printk("CVSTD%02x  ch%02x chip%2x\r\n", tmp, i,iChip);
-#endif
-                                if( ! (0x08 & tmp) )
-                                {
-#if (DEBUG)
-                                    printk("720P V1 Detected ch%02x chip%2x\r\n",i,iChip);
-#endif
-                                    wdi-> mode[i] &= 0xf7;
-                                    tp2802_set_video_mode(iChip, wdi-> mode[i], i, STD_TVI); //to speed the switching
 
+                                #if (DEBUG)
+                                printk("CVSTD%02x  ch%02x chip%2x\r\n", tmp, i,iChip);
+                                #endif
+
+                                if (!(0x08 & tmp)) {
+                                    #if (DEBUG)
+                                    printk("720P V1 Detected ch%02x chip%2x\r\n",i,iChip);
+                                    #endif
+                                    wdi-> mode[i] &= 0xf7;
+                                    //to speed the switching
+                                    tp2802_set_video_mode(iChip, wdi-> mode[i], i, STD_TVI);
                                 }
                             }
 
                             //these code need to keep bottom
                             {
-                                    tmp = tp28xx_byte_read(iChip, 0xa7);
-                                    tmp &= 0xfe;
-                                    tp28xx_byte_write(iChip, 0xa7, tmp);
-                                    //tp28xx_byte_write(iChip, 0x2f, 0x0f);
-                                    tp28xx_byte_write(iChip, 0x1f, 0x06);
-                                    tp28xx_byte_write(iChip, 0x1e, 0x60);
+                                tmp = tp28xx_byte_read(iChip, 0xa7);
+                                tmp &= 0xfe;
+                                tp28xx_byte_write(iChip, 0xa7, tmp);
+                                /* tp28xx_byte_write(iChip, 0x2f, 0x0f); */
+                                tp28xx_byte_write(iChip, 0x1f, 0x06);
+                                tp28xx_byte_write(iChip, 0x1e, 0x60);
                             }
-
                         }
-
-                    }
-                    else if(1 == wdi->count[i])
-                    {
-
+                    } else if (1 == wdi->count[i]) {
                         tmp = tp28xx_byte_read(iChip, 0xa7);
                         tmp |= 0x01;
                         tp28xx_byte_write(iChip, 0xa7, tmp);
-#if (DEBUG)
+
+                        #if (DEBUG)
                         tmp = tp28xx_byte_read(iChip, 0x01);
                         printk("status%02x  ch%02x\r\n", tmp, i);
                         tmp = tp28xx_byte_read(iChip, 0x03);
                         printk("CVSTD%02x  ch%02x\r\n", tmp, i);
-#endif
-                    }
-                    else if( wdi->count[i] < EQ_COUNT-3)
-                    {
-
-                        if(SCAN_AUTO == wdi->scan[i] )
-                        {
-
-                            if( STD_TVI == wdi-> std[i])
-                            {
+                        #endif
+                    } else if (wdi->count[i] < EQ_COUNT - 3) {
+                        if (SCAN_AUTO == wdi->scan[i]) {
+                            if ( STD_TVI == wdi-> std[i]) {
                                 tmp = tp28xx_byte_read(iChip, 0x01);
 
-                                if((TP2802_PAL == wdi-> mode[i]) || (TP2802_NTSC == wdi-> mode[i]))
-                                {
+                                if ((TP2802_PAL == wdi-> mode[i]) || (TP2802_NTSC == wdi-> mode[i])) {
                                     //nothing to do
-                                }
-                                else if(TP2802_QXGA18 == wdi-> mode[i])
-                                {
-                                    if(0x60 == (tmp&0x64) )
-                                    {
+                                } else if(TP2802_QXGA18 == wdi-> mode[i]) {
+                                    if (0x60 == (tmp & 0x64)) {
                                         wdi-> std[i] = STD_HDA; //no CVI QXGA18
                                         tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
                                     }
-                                }
-                                else if(TP2802_QHD15 == wdi-> mode[i] || TP2802_5M12 == wdi-> mode[i])
-                                {
-                                    if(0x60 == (tmp&0x64) )
-                                    {
-                                        wdi-> std[i] = STD_HDA; //no CVI QHD15/5M20/5M12.5
+                                } else if (TP2802_QHD15 == wdi-> mode[i] || TP2802_5M12 == wdi-> mode[i]) {
+                                    if (0x60 == (tmp & 0x64)) {
+                                        //no CVI QHD15/5M20/5M12.5
+                                        wdi-> std[i] = STD_HDA;
                                         tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
                                     }
-                                }
-                                else if( TP2802_QHD25 == wdi-> mode[i] || TP2802_QHD30 == wdi-> mode[i]
-                                        ||TP2802_8M12 == wdi-> mode[i] || TP2802_8M15 == wdi-> mode[i]
-                                        ||TP2802_5M20 == wdi-> mode[i]
+                                } else if (TP2802_QHD25 == wdi-> mode[i] ||
+                                           TP2802_QHD30 == wdi-> mode[i] ||
+                                           TP2802_8M12 == wdi-> mode[i] ||
+                                           TP2802_8M15 == wdi-> mode[i] ||
+                                           TP2802_5M20 == wdi-> mode[i]
                                         )
                                 {
                                     agc = tp28xx_byte_read(iChip, 0x10);
@@ -3347,100 +3265,79 @@ static int TP2802_watchdog_deamon(void *data)
 
                                     tp28xx_byte_write(iChip, 0x10, agc);
 
-                                    if(rx1 > 0x30)               wdi-> std[i] = STD_HDA;
-                                    else if(0x60 == (tmp&0x64) ) wdi-> std[i] = STD_HDC;
-     #if (DEBUG)
-                                    printk("RX1=%02x standard to %02x  ch%02x\r\n", rx1, wdi-> std[i], i);
-    #endif
-                                    if(STD_TVI != wdi->std[i]) tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                    else if(TP2802_8M12 == wdi-> mode[i] || TP2802_8M15 == wdi-> mode[i]) tp28xx_byte_write(iChip, 0x20, 0x50); //restore TVI clamping
-                                }
-                                else if(0x60 == (tmp&0x64) )
-                                {
-                                    rx2 = tp28xx_byte_read(iChip, 0x94); //capture line7 to match 3M/4M RT
+                                    if (rx1 > 0x30)
+                                        wdi-> std[i] = STD_HDA;
+                                    else if(0x60 == (tmp&0x64))
+                                        wdi-> std[i] = STD_HDC;
 
-                                    if(HDC_enable)
-                                    {
-                                        if     (0xff == rx2)                wdi-> std[i] = STD_HDC;
-                                        else if(0x00 == rx2)                wdi-> std[i] = STD_HDC_DEFAULT;
-                                        else                                wdi-> std[i] = STD_HDA;
-                                    }
-                                    else
-                                    {
+                                    #if (DEBUG)
+                                    printk("RX1=%02x standard to %02x  ch%02x\r\n", rx1, wdi-> std[i], i);
+                                    #endif
+
+                                    if (STD_TVI != wdi->std[i])
+                                        tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+                                    else if (TP2802_8M12 == wdi-> mode[i] || TP2802_8M15 == wdi-> mode[i])
+                                        tp28xx_byte_write(iChip, 0x20, 0x50); //restore TVI clamping
+                                } else if (0x60 == (tmp & 0x64)) {
+                                    //capture line7 to match 3M/4M RT
+                                    rx2 = tp28xx_byte_read(iChip, 0x94);
+
+                                    if (HDC_enable) {
+                                        if (0xff == rx2)
+                                            wdi-> std[i] = STD_HDC;
+                                        else if(0x00 == rx2)
+                                            wdi-> std[i] = STD_HDC_DEFAULT;
+                                        else
+                                            wdi-> std[i] = STD_HDA;
+                                    } else {
                                         wdi-> std[i] = STD_HDA;
                                     }
 
-                                    if(STD_TVI != wdi->std[i])
-                                    {
+                                    if (STD_TVI != wdi->std[i]) {
                                         tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-    #if (DEBUG)
+                                        #if (DEBUG)
                                         printk("RX2=%02x standard to %02x  ch%02x\r\n", rx2, wdi-> std[i], i);
-    #endif
+                                        #endif
+                                    }
+                                }
+                            }
+                        }
+                    } else if (wdi->count[i] < EQ_COUNT) {
+
+                    } else if (wdi->count[i] == EQ_COUNT) {
+                        gain = tp28xx_read_egain(iChip);
+                        if (STD_TVI != wdi-> std[i]) {
+                            // manual mode
+                            tp28xx_byte_write(iChip, 0x07, 0x80 | (gain >> 2));
+                        }
+                    }
+                    else if (wdi->count[i] == EQ_COUNT + 1) {
+                        if (SCAN_AUTO == wdi->scan[i]) {
+                            if (HDC_enable) {
+                                if (STD_HDC_DEFAULT == wdi->std[i]) {
+                                    tp28xx_byte_write(iChip, 0x2f,0x0c);
+                                    tmp = tp28xx_byte_read(iChip, 0x04);
+                                    status = tp28xx_byte_read(iChip, 0x01);
+
+                                    //if(0x10 == (0x11 & status) && (tmp < 0x18 || tmp > 0xf0))
+                                    //if((tmp < 0x18 || tmp > 0xf0))
+                                    if (0x10 == (0x11 & status)) {
+                                        wdi-> std[i] = STD_HDC;
+                                    } else {
+                                        wdi-> std[i] = STD_HDA;
                                     }
 
+                                    tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
+
+                                    #if (DEBUG)
+                                    printk("reg01=%02x reg04@2f=0c %02x std%02x ch%02x\r\n", status, tmp, wdi-> std[i], i );
+                                    #endif
                                 }
                             }
-
                         }
-
-                    }
-                    else if( wdi->count[i] < EQ_COUNT)
-                    {
-
-
-                    }
-                    else if(wdi->count[i] == EQ_COUNT)
-                    {
-                       gain = tp28xx_read_egain(iChip);
-
-                        if( STD_TVI != wdi-> std[i] )
-                        {
-                                {
-                                    tp28xx_byte_write(iChip, 0x07, 0x80|(gain>>2));  // manual mode
-                                }
-
-                        }
-
-                    }
-                    else if(wdi->count[i] == EQ_COUNT+1)
-                    {
-
-                            if(  SCAN_AUTO == wdi->scan[i])
-                            {
-
-                                if( HDC_enable )
-                                {
-                                        if(STD_HDC_DEFAULT == wdi->std[i] )
-                                        {
-                                            tp28xx_byte_write(iChip, 0x2f,0x0c);
-                                            tmp = tp28xx_byte_read(iChip, 0x04);
-                                            status = tp28xx_byte_read(iChip, 0x01);
-
-                                            //if(0x10 == (0x11 & status) && (tmp < 0x18 || tmp > 0xf0))
-                                            if(0x10 == (0x11 & status))
-                                            //if((tmp < 0x18 || tmp > 0xf0))
-                                            {
-                                                wdi-> std[i] = STD_HDC;
-                                            }
-                                            else
-                                            {
-                                                wdi-> std[i] = STD_HDA;
-                                            }
-                                            tp2802_set_video_mode(iChip, wdi-> mode[i], i, wdi-> std[i]);
-                                            #if (DEBUG)
-                                            printk("reg01=%02x reg04@2f=0c %02x std%02x ch%02x\r\n", status, tmp, wdi-> std[i], i );
-                                            #endif
-                                        }
-                                }
-                            }
-
-
-                    }
-                    else
-                    {
-                        if( SCAN_AUTO == wdi->scan[i])
-                        {
-/*
+                    } else {
+                        if (SCAN_AUTO == wdi->scan[i]) {
+                                /*
                                 if(wdi-> mode[i] < TP2802_3M18)
                                 {
                                             tmp = tp28xx_byte_read(iChip, 0x03); //
@@ -3453,18 +3350,12 @@ static int TP2802_watchdog_deamon(void *data)
                                                 wdi->force[i] = 1;
                                             }
                                 }
-*/
+                                */
                         }
-
-
                     }
                 }
             }
         }
-
-        //do_gettimeofday(&end);
-
-        //interval = 1000000*(end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec);
 
         //printk("WDT elapsed time %d.%dms\n", interval/1000, interval%1000);
         up(&watchdog_lock);
@@ -3474,7 +3365,6 @@ static int TP2802_watchdog_deamon(void *data)
     }
 
     set_current_state(TASK_RUNNING);
-
     printk("TP2802_watchdog_deamon: exit!\n");
 
     return 0;
@@ -3492,37 +3382,30 @@ int __init TP2802_watchdog_init(void)
 {
     struct task_struct *p_dog;
     int i, j;
+
     watchdog_state = WATCHDOG_RUNNING;
     memset(&watchdog_info, 0, sizeof(watchdog_info));
 
-    for(i=0; i<MAX_CHIPS; i++)
-    {
+    for (i = 0; i < MAX_CHIPS; i++) {
         watchdog_info[i].addr = tp2802_i2c_addr[i];
-        for(j=0; j<CHANNELS_PER_CHIP; j++)
-        {
+        for(j = 0; j < CHANNELS_PER_CHIP; j++) {
             watchdog_info[i].count[j] = 0;
             watchdog_info[i].force[j] = 0;
-            //watchdog_info[i].loss[j] = 1;
             watchdog_info[i].mode[j] = INVALID_FORMAT;
             watchdog_info[i].scan[j] = SCAN_AUTO;
             watchdog_info[i].state[j] = VIDEO_UNPLUG;
             watchdog_info[i].std[j] = STD_TVI;
         }
-
     }
 
     p_dog = kthread_create(TP2802_watchdog_deamon, NULL, "WatchDog");
-
-    if ( IS_ERR(p_dog) )
-    {
+    if (IS_ERR(p_dog)) {
         printk("TP2802_watchdog_init: create watchdog_deamon failed!\n");
         return -1;
     }
 
     wake_up_process(p_dog);
-
     task_watchdog_deamon = p_dog;
-
     printk("TP2802_watchdog_init: done!\n");
 
     return 0;
@@ -3531,28 +3414,25 @@ int __init TP2802_watchdog_init(void)
 /******************************************************************************
  *
  * TP2825_watchdog_exit()
-
  *
  ******************************************************************************/
 void __exit TP2802_watchdog_exit(void)
 {
+    struct task_struct *p_dog;
 
-    struct task_struct *p_dog = task_watchdog_deamon;
-    watchdog_state = WATCHDOG_EXIT;
-
-    if ( p_dog == NULL )
+    p_dog = task_watchdog_deamon;
+    if (p_dog == NULL )
         return;
 
+    watchdog_state = WATCHDOG_EXIT;
     wake_up_process(p_dog);
-
     kthread_stop(p_dog);
-
     yield();
-
     task_watchdog_deamon = NULL;
 
     printk("TP2802_watchdog_exit: done!\n");
 }
+
 module_init(tp2802_module_init);
 module_exit(tp2802_module_exit);
 
