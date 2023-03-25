@@ -5,50 +5,77 @@
 
 #define TP2825_VERSION_CODE KERNEL_VERSION(0, 0, 8)
 
+#define VIDEO_INPUT_STATUS 0X01
+#define DETECTION_STATUS 0X03
+#define CVSTD_MASK 0x07
+#define SYWD (1 << 3)
+#define SYWD_TVI_V10 0
+#define SYWD_TVI_V20 1
+
+#define EQ2_REFERENCE 0x09
+#define EQ2_CTRL 0x07
+#define BRIGHTNESS_CTL 0x10
+#define PCLAMP_CTL 0x20
+#define INTERNAL_STATUS 0x04
+#define CLAMPING_CTRL 0x26
+#define CLAMPING_CTRL_NORMAL (1 << 0)
+#define CLAMPING_CTRL_DETECT (0 << 0)
+#define PSP (1 << 1)
+#define GTST(v) (v << 2)
+
+#define TEST_CTL 0x2F
+
+#define RX_CTL 0xA7
+#define RXEN (1 << 0)
+
+#define RESET_CTL 0x06
+#define TXDATA2_CTL 0x60
+#define RXDATA2_CTL 0x94
+
 enum{
-TP2825B =0x2825,
-TP2850  =0x2850,
-TP2860  =0x2860,
+    TP2825B = 0x2825,
+    TP2850  = 0x2850,
+    TP2860  = 0x2860,
 };
 enum{
-TP2802_1080P25 =	    0x03,
-TP2802_1080P30 =	    0x02,
-TP2802_720P25  =	    0x05,
-TP2802_720P30  =    	0x04,
-TP2802_720P50  =	    0x01,
-TP2802_720P60  =    	0x00,
-TP2802_SD      =        0x06,
-INVALID_FORMAT =		0x07,
-TP2802_720P25V2=	    0x0D,
-TP2802_720P30V2=		0x0C,
-TP2802_PAL	   =        0x08,
-TP2802_NTSC	   =    	0x09,
-TP2802_3M18         =   0x20,   //2048x1536@18.75 for TVI
-TP2802_5M12         =   0x21,   //2592x1944@12.5 for TVI
-TP2802_4M15         =   0x22,   //2688x1520@15 for TVI
-TP2802_3M20         =   0x23,   //2048x1536@20 for TVI
-TP2802_4M12         =   0x24,   //2688x1520@12.5 for TVI
-TP2802_6M10         =   0x25,   //3200x1800@10 for TVI
-TP2802_QHD30        =   0x26,   //2560x1440@30 for TVI/HDA/HDC
-TP2802_QHD25        =   0x27,   //2560x1440@25 for TVI/HDA/HDC
-TP2802_QHD15        =   0x28,   //2560x1440@15 for HDA
-TP2802_QXGA18       =   0x29,   //2048x1536@18 for HDA/TVI
-TP2802_QXGA30       =   0x2A,   //2048x1536@30 for HDA
-TP2802_QXGA25       =   0x2B,   //2048x1536@25 for HDA
-TP2802_4M30         =   0x2C,   //2688x1520@30 for TVI(for future)
-TP2802_4M25         =   0x2D,   //2688x1520@25 for TVI(for future)
-TP2802_5M20         =   0x2E,   //2592x1944@20 for TVI/HDA
-TP2802_8M15         =   0x2f,   //3840x2160@15 for TVI
-TP2802_8M12         =   0x30,   //3840x2160@12.5 for TVI
-TP2802_1080P15      =   0x31,   //1920x1080@15 for TVI
-TP2802_1080P60      =   0x32,   //1920x1080@60 for TVI
-TP2802_960P30       =   0x33,   //1280x960@30 for TVI
-TP2802_1080P20      =   0x34,   //1920x1080@20 for TVI
-TP2802_1080P50      =   0x35,   //1920x1080@50 for TVI
-TP2802_720P14       =   0x36,   //1280x720@14 for TVI
-TP2802_720P30HDR    =   0x37,   //1280x720@30 for TVI
-TP2802_6M20         =   0x38,   //2960x1920@20 for CVI
-TP2802_8M15V2       =   0x39,   //3264x2448@15 for TVI
+    TP2802_1080P25      =   0x03,
+    TP2802_1080P30      =   0x02,
+    TP2802_720P25       =   0x05,
+    TP2802_720P30       =   0x04,
+    TP2802_720P50       =   0x01,
+    TP2802_720P60       =   0x00,
+    TP2802_SD           =   0x06,
+    INVALID_FORMAT      =   0x07,
+    TP2802_720P25V2     =   0x0D,
+    TP2802_720P30V2     =   0x0C,
+    TP2802_PAL          =   0x08,
+    TP2802_NTSC         =   0x09,
+    TP2802_3M18         =   0x20,   //2048x1536@18.75 for TVI
+    TP2802_5M12         =   0x21,   //2592x1944@12.5 for TVI
+    TP2802_4M15         =   0x22,   //2688x1520@15 for TVI
+    TP2802_3M20         =   0x23,   //2048x1536@20 for TVI
+    TP2802_4M12         =   0x24,   //2688x1520@12.5 for TVI
+    TP2802_6M10         =   0x25,   //3200x1800@10 for TVI
+    TP2802_QHD30        =   0x26,   //2560x1440@30 for TVI/HDA/HDC
+    TP2802_QHD25        =   0x27,   //2560x1440@25 for TVI/HDA/HDC
+    TP2802_QHD15        =   0x28,   //2560x1440@15 for HDA
+    TP2802_QXGA18       =   0x29,   //2048x1536@18 for HDA/TVI
+    TP2802_QXGA30       =   0x2A,   //2048x1536@30 for HDA
+    TP2802_QXGA25       =   0x2B,   //2048x1536@25 for HDA
+    TP2802_4M30         =   0x2C,   //2688x1520@30 for TVI(for future)
+    TP2802_4M25         =   0x2D,   //2688x1520@25 for TVI(for future)
+    TP2802_5M20         =   0x2E,   //2592x1944@20 for TVI/HDA
+    TP2802_8M15         =   0x2f,   //3840x2160@15 for TVI
+    TP2802_8M12         =   0x30,   //3840x2160@12.5 for TVI
+    TP2802_1080P15      =   0x31,   //1920x1080@15 for TVI
+    TP2802_1080P60      =   0x32,   //1920x1080@60 for TVI
+    TP2802_960P30       =   0x33,   //1280x960@30 for TVI
+    TP2802_1080P20      =   0x34,   //1920x1080@20 for TVI
+    TP2802_1080P50      =   0x35,   //1920x1080@50 for TVI
+    TP2802_720P14       =   0x36,   //1280x720@14 for TVI
+    TP2802_720P30HDR    =   0x37,   //1280x720@30 for TVI
+    TP2802_6M20         =   0x38,   //2960x1920@20 for CVI
+    TP2802_8M15V2       =   0x39,   //3264x2448@15 for TVI
 };
 enum{
     VIDEO_UNPLUG,
@@ -66,8 +93,8 @@ enum{
 };
 
 enum{
-    VIDEO_PAGE=0,   //
-    MIPI_PAGE=8
+    VIDEO_PAGE = 0,
+    MIPI_PAGE = 8
 };
 enum{
     SCAN_DISABLE=0,
@@ -142,27 +169,27 @@ enum{
 };
 
 #define FLAG_LOSS           0x80
-#define FLAG_H_LOCKED     0x20
-#define FLAG_HV_LOCKED    0x60
+#define FLAG_H_LOCKED       0x20
+#define FLAG_HV_LOCKED      0x60
 
-#define FLAG_HDC_MODE    0x80
-#define FLAG_HALF_MODE    0x40
-#define FLAG_MEGA_MODE    0x20
-#define FLAG_HDA_MODE    0x10
+#define FLAG_HDC_MODE       0x80
+#define FLAG_HALF_MODE      0x40
+#define FLAG_MEGA_MODE      0x20
+#define FLAG_HDA_MODE       0x10
 
-#define CHANNELS_PER_CHIP 	4
-#define MAX_CHIPS 	1
-#define SUCCESS				0
-#define FAILURE				-1
+#define CHANNELS_PER_CHIP   4
+#define MAX_CHIPS           1
+#define SUCCESS             0
+#define FAILURE             -1
 
-#define BRIGHTNESS			0x10
-#define CONTRAST			0x11
-#define SATURATION			0x12
-#define HUE					0X13
-#define SHARPNESS			0X14
+#define BRIGHTNESS          0x10
+#define CONTRAST            0x11
+#define SATURATION          0x12
+#define HUE                 0X13
+#define SHARPNESS           0X14
 
 
-#define     MAX_COUNT       0xffff
+#define MAX_COUNT           0xffff
 
 typedef struct _tp2802_register
 {
@@ -242,7 +269,7 @@ extern unsigned char tp2860_read_reg(unsigned char reg);
 #define TP2802_SET_RX_MODE   	    _IOW(TP2802_IOC_MAGIC, 21, tp2802_PTZ_data)
 // Function prototypes
 static int tp2802_set_video_mode(unsigned char addr, unsigned char mode, unsigned char ch, unsigned char std);
-static void tp2802_set_reg_page(unsigned char addr, unsigned char ch);
+static void tp2802_set_reg_page(unsigned char addr, unsigned char page);
 
 #endif
 
